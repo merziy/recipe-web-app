@@ -1,13 +1,22 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import Header from './components/Header.vue'
+<script lang="ts" setup>
+  import { RouterLink, RouterView } from 'vue-router'
+  import Header from './components/Header.vue'
+  import Sidebar from './components/Sidebar.vue';
+  import { ref } from 'vue';
+
+  const sidebarOpen = ref(false);
+
+  function toggleSidebar() {
+    sidebarOpen.value = !sidebarOpen.value;
+  }
 </script>
 
 <template>
   <header>
     <div class="wrapper">
-      <Header />
-
+      <Header @toggle-sidebar="toggleSidebar" />
+      <Sidebar v-if="sidebarOpen"/>
+      <RouterView v-else />
       <!-- <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
@@ -15,7 +24,6 @@ import Header from './components/Header.vue'
     </div>
   </header>
 
-  <RouterView />
 </template>
 
 <style scoped>

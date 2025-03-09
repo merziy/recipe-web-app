@@ -1,6 +1,9 @@
 <script setup lang="ts">
   import { ArrowLeft, IconoirProvider, Menu, Plus } from '@iconoir/vue';
   import { RouterLink } from 'vue-router';
+  import { defineEmits } from 'vue';
+
+  const emit = defineEmits(['toggle-sidebar']);
 </script>
 
 <template>
@@ -17,7 +20,9 @@
         <RouterLink to="/">
           <ArrowLeft />
         </RouterLink>
-        <Menu />
+        <button @click="$emit('toggle-sidebar')">
+          <Menu />
+        </button>
       </div>
       <h1 class="logo">Recipe Web App</h1>
       <RouterLink to="/">
@@ -35,6 +40,12 @@ nav {
   justify-self: center;
   align-items: center;
   width: 100%;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
 }
 
 .logo {
