@@ -1,7 +1,7 @@
 <template>
-  <article>
-    <image src="@/assets/chicken-and-rice.jpg" alt="" />
-    <h1>Chicken and Rice With Scallion-Ginger Sauce</h1>
+  <article v-if="recipe">
+    <image :src="`@/assets/${recipe.image}`" alt="" />
+    <h1>{{ recipe.title }}</h1>
     <ul>
       <li>
         <button>
@@ -21,16 +21,37 @@
     </ul>
     <ul>
       <li>
-        <p>4 servings</p>
+        <p>Servings: {{ recipe.servings }}</p>
       </li>
       <li>
-        <p>Prep: 15 mins</p>
+        <p>Prep: {{ recipe.prepTime }}</p>
       </li>
       <li>
-        <p>Cook: 10 mins</p>
+        <p>Cook: {{ recipe.cookTime }}</p>
       </li>
     </ul>
-    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.</p>
-    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.</p>
+    <p v-for="(instruction, index) in recipe.instructions" :key="index">
+      {{ instruction }}
+    </p>
   </article>
+  <div v-else>
+    <p>Recipe not found.</p>
+  </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const recipe = ref(null);
+
+onMounted(async () => {
+  const handle = route.params.handle;
+  const res = await fetch(`/api/recipes`);
+  if (res.ok) {
+    const recipes = await res.json();
+    recipe.value = recipes.find((r: { handle: string }) => r.handle === handle);
+  }
+});
+</script>

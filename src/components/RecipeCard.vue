@@ -9,10 +9,11 @@
     servings: Number,
     prepTime: String,
     cookTime: String,
+    handle: String,
   });
 
   function goToArticle() {
-    router.push('/article');
+    router.push(`/article/${props.handle}`);
   }
 </script>
 

@@ -39,12 +39,14 @@ const cookTime = ref('');
 const status = ref('');
 
 async function submitRecipe() {
+  const handle = title.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   const recipe = {
     title: title.value,
     description: description.value,
     servings: servings.value,
     prepTime: prepTime.value,
     cookTime: cookTime.value,
+    handle,
   };
   try {
     const res = await fetch('/api/recipes', {

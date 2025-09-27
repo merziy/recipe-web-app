@@ -29,6 +29,10 @@ app.post('/api/recipes', async (req, res) => {
   try {
     const recipe = req.body;
     if (!db) return res.status(500).json({ error: 'DB not connected' });
+    const existing = await db.collection('recipes').findOne({ handle: recipe.handle });
+    if (existing) {
+      return res.status(400).json({ error: 'Recipe already exists' });
+    }
     const result = await db.collection('recipes').insertOne(recipe);
     res.status(201).json({ success: true, id: result.insertedId });
   } catch (err) {
