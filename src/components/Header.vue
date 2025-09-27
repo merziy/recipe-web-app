@@ -24,7 +24,9 @@
           <Menu />
         </button>
       </div>
-      <h1 class="logo">Recipe Web App</h1>
+      <RouterLink to="/">
+        <h1 class="logo">Recipe Web App</h1>
+      </RouterLink>
       <RouterLink to="/">
         <Plus />
       </RouterLink>
