@@ -27,7 +27,7 @@
       <RouterLink to="/">
         <h1 class="logo">Recipe Web App</h1>
       </RouterLink>
-      <RouterLink to="/">
+      <RouterLink to="/add-recipe">
         <Plus />
       </RouterLink>
     </nav>

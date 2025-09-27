@@ -1,7 +1,15 @@
 <script setup lang="ts">
   import { useRouter } from 'vue-router';
+  import { defineProps } from 'vue';
 
   const router = useRouter();
+  const props = defineProps({
+    title: String,
+    description: String,
+    servings: Number,
+    prepTime: String,
+    cookTime: String,
+  });
 
   function goToArticle() {
     router.push('/article');
@@ -17,20 +25,20 @@
       height="115"
     >
     <article>
-      <p>Lunch</p>
-      <h3>Chicken and Rice With Scallion-Ginger Sauce</h3>
+      <p>{{ props.title }}</p>
+      <h3>{{ props.description }}</h3>
       <ul>
         <li>
           <p>Servings</p>
-          <p>4</p>
+          <p>{{ props.servings }}</p>
         </li>
         <li>
           <p>Prep</p>
-          <p>0:05</p>
+          <p>{{ props.prepTime }}</p>
         </li>
         <li>
           <p>Cook</p>
-          <p>0:40</p>
+          <p>{{ props.cookTime }}</p>
         </li>
       </ul>
     </article>
