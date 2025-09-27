@@ -1,5 +1,15 @@
+<script setup lang="ts">
+  import { useRouter } from 'vue-router';
+
+  const router = useRouter();
+
+  function goToArticle() {
+    router.push('/article');
+  }
+</script>
+
 <template>
-  <section>
+  <section @click="goToArticle" style="cursor:pointer;">
     <div class="green-bar" aria-hidden="true"></div>
     <img
       src="@/assets/chicken-and-rice.jpg" 
