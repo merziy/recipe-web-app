@@ -1,5 +1,9 @@
 <template>
   <h2>{{ currentMonthAndYear }}</h2>
+  <div v-if="dateStore.selectedDate" class="selected-date-banner">
+    <span>📅 Selected: {{ formatSelectedDate }}</span>
+    <button @click="clearSelection" class="clear-selection-btn">Clear</button>
+  </div>
   <table>
     <thead>
       <tr>
@@ -18,21 +22,48 @@
           v-for="(day, index) in week"
           :key="index"
           :class="getDayClass(day)"
+          @click="day ? handleDateClick(day) : null"
         >
-          {{ day ? day.getDate() : '' }}
+          <div class="date-cell-content">
+            <span>{{ day ? day.getDate() : '' }}</span>
+            <span v-if="day && hasRecipes(day)" class="recipe-indicator">•</span>
+          </div>
         </td>
       </tr>
     </tbody>
   </table>
+  <DateRecipesModal 
+    :is-open="modalOpen" 
+    :date="selectedDateForModal"
+    @close="closeModal"
+    @recipe-removed="fetchDatesWithRecipes"
+  />
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue';
+  import { computed, ref, onMounted, watch } from 'vue';
+  import { useDateSelectionStore } from '@/stores/dateSelection';
+  import DateRecipesModal from './DateRecipesModal.vue';
+
+  const dateStore = useDateSelectionStore();
+  const modalOpen = ref(false);
+  const selectedDateForModal = ref<Date | null>(null);
+  const datesWithRecipes = ref<Set<string>>(new Set());
 
   const currentMonthAndYear = computed(() => {
     const month = new Date().toLocaleString('default', { month: 'long' });
     const year = new Date().getFullYear();
     return `${month}, ${year}`;
+  });
+
+  const formatSelectedDate = computed(() => {
+    if (!dateStore.selectedDate) return '';
+    return dateStore.selectedDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   });
 
   const weeks = computed(() => {
@@ -74,20 +105,122 @@
     return weeks;
   });
 
-  const getDayClass = (day: Date) => {
+  function getDateKey(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  function hasRecipes(day: Date): boolean {
+    return datesWithRecipes.value.has(getDateKey(day));
+  }
+
+  function isSelected(day: Date): boolean {
+    if (!dateStore.selectedDate) return false;
+    return getDateKey(day) === getDateKey(dateStore.selectedDate);
+  }
+
+  const getDayClass = (day: Date | null) => {
+    if (!day) return '';
+    const classes: string[] = [];
     const currentMonth = new Date().getMonth();
     const dayMonth = day.getMonth();
 
     if (dayMonth !== currentMonth) {
-      return 'gray-date';
+      classes.push('gray-date');
+    }
+    if (isSelected(day)) {
+      classes.push('selected-date');
+    }
+
+    return classes.join(' ');
+  }
+
+  async function fetchDatesWithRecipes() {
+    try {
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      const dates = new Set<string>();
+      const promises: Promise<void>[] = [];
+      
+      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+        const dateStr = getDateKey(d);
+        promises.push(
+          fetch(`/api/recipes/date/${dateStr}`)
+            .then(res => res.ok ? res.json() : [])
+            .then(recipes => {
+              if (recipes && recipes.length > 0) {
+                dates.add(dateStr);
+              }
+            })
+            .catch(() => {})
+        );
+      }
+      
+      await Promise.all(promises);
+      datesWithRecipes.value = dates;
+    } catch (err) {
+      console.error('Error fetching dates with recipes:', err);
     }
   }
+
+  function handleDateClick(day: Date) {
+    const normalizedDate = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+    dateStore.setSelectedDate(normalizedDate);
+    selectedDateForModal.value = normalizedDate;
+    modalOpen.value = true;
+  }
+
+  function closeModal() {
+    modalOpen.value = false;
+    selectedDateForModal.value = null;
+  }
+
+  function clearSelection() {
+    dateStore.clearSelectedDate();
+  }
+
+  onMounted(() => {
+    fetchDatesWithRecipes();
+  });
+
+  watch(() => currentMonthAndYear.value, () => {
+    fetchDatesWithRecipes();
+  });
 </script>
 
 <style scoped>
   h2 {
     text-align: center;
     background-color: #9EBED6;
+    margin: 0;
+    padding: 0.5em;
+  }
+
+  .selected-date-banner {
+    background-color: #e3f2fd;
+    padding: 0.75em;
+    margin: 0.5em 0;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #9EBED6;
+  }
+
+  .clear-selection-btn {
+    background: #666;
+    color: white;
+    border: none;
+    padding: 0.4em 0.8em;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+  }
+
+  .clear-selection-btn:hover {
+    background: #555;
   }
 
   .gray-date {
@@ -103,6 +236,31 @@
   td {
     padding: 10px;
     border: 1px solid #ddd;
+    cursor: pointer;
+    position: relative;
+  }
+
+  td:hover {
+    background-color: #f0f0f0;
+  }
+
+  .selected-date {
+    background-color: #9EBED6 !important;
+    font-weight: bold;
+  }
+
+  .date-cell-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .recipe-indicator {
+    color: #4CAF50;
+    font-size: 1.2em;
+    line-height: 0.5;
   }
 
   thead {
