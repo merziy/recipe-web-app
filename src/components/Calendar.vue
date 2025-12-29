@@ -1,9 +1,5 @@
 <template>
   <h2>{{ currentMonthAndYear }}</h2>
-  <div v-if="dateStore.selectedDate" class="selected-date-banner">
-    <span>📅 Selected: {{ formatSelectedDate }}</span>
-    <button @click="clearSelection" class="clear-selection-btn">Clear</button>
-  </div>
   <table>
     <thead>
       <tr>
@@ -41,9 +37,10 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref, onMounted, watch } from 'vue';
   import { useDateSelectionStore } from '@/stores/dateSelection';
-  import DateRecipesModal from './DateRecipesModal.vue';
+import { useRecipesStore } from '@/stores/recipes';
+import { computed, onMounted, ref, watch } from 'vue';
+import DateRecipesModal from './DateRecipesModal.vue';
 
   const dateStore = useDateSelectionStore();
   const modalOpen = ref(false);
@@ -142,23 +139,15 @@
       const lastDay = new Date(year, month + 1, 0);
       
       const dates = new Set<string>();
-      const promises: Promise<void>[] = [];
-      
-      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-        const dateStr = getDateKey(d);
-        promises.push(
-          fetch(`/api/recipes/date/${dateStr}`)
-            .then(res => res.ok ? res.json() : [])
-            .then(recipes => {
-              if (recipes && recipes.length > 0) {
-                dates.add(dateStr);
-              }
-            })
-            .catch(() => {})
-        );
+      const store = useRecipesStore();
+      store.load();
+      for (const r of store.recipes) {
+        if (!r.dates || r.dates.length === 0) continue;
+        for (const d of r.dates) {
+          const dt = new Date(d);
+          if (dt >= firstDay && dt <= lastDay) dates.add(d);
+        }
       }
-      
-      await Promise.all(promises);
       datesWithRecipes.value = dates;
     } catch (err) {
       console.error('Error fetching dates with recipes:', err);

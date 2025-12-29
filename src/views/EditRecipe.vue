@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useRecipesStore } from '@/stores/recipes';
 
 const route = useRoute();
 const router = useRouter();
@@ -62,30 +63,26 @@ const statusClass = ref('');
 
 onMounted(async () => {
   const handle = route.params.handle as string;
+  const store = useRecipesStore();
   try {
-    const res = await fetch('/api/recipes');
-    if (res.ok) {
-      const recipes = await res.json();
-      recipe.value = recipes.find((r: { handle: string }) => r.handle === handle);
-      if (recipe.value) {
-        title.value = recipe.value.title || '';
-        description.value = recipe.value.description || '';
-        servings.value = recipe.value.servings || 1;
-        prepTime.value = recipe.value.prepTime || '';
-        cookTime.value = recipe.value.cookTime || '';
-        if (recipe.value.instructions && Array.isArray(recipe.value.instructions)) {
-          instructionsText.value = recipe.value.instructions.join('\n');
-        } else {
-          instructionsText.value = '';
-        }
+    store.load();
+    recipe.value = store.getByHandle(handle) as any;
+    if (recipe.value) {
+      title.value = recipe.value.title || '';
+      description.value = recipe.value.description || '';
+      servings.value = recipe.value.servings || 1;
+      prepTime.value = recipe.value.prepTime || '';
+      cookTime.value = recipe.value.cookTime || '';
+      if (recipe.value.instructions && Array.isArray(recipe.value.instructions)) {
+        instructionsText.value = recipe.value.instructions.join('\n');
       } else {
-        error.value = 'Recipe not found.';
+        instructionsText.value = '';
       }
     } else {
-      error.value = 'Error loading recipe.';
+      error.value = 'Recipe not found.';
     }
   } catch (err) {
-    error.value = 'Network error loading recipe.';
+    error.value = 'Error loading recipe.';
   } finally {
     loading.value = false;
   }
@@ -110,25 +107,20 @@ async function submitRecipe() {
   };
 
   try {
-    const res = await fetch(`/api/recipes/${recipe.value.handle}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedRecipe),
-    });
-
-    if (res.ok) {
+    const store = useRecipesStore();
+    const ok = store.update(recipe.value.handle, updatedRecipe as any);
+    if (ok) {
       status.value = 'Recipe updated successfully!';
       statusClass.value = 'success';
       setTimeout(() => {
         router.push(`/article/${recipe.value.handle}`);
-      }, 1000);
+      }, 600);
     } else {
-      const errorData = await res.json();
-      status.value = `Error: ${errorData.error || 'Failed to update recipe'}`;
+      status.value = 'Error: Failed to update recipe';
       statusClass.value = 'error';
     }
   } catch (err) {
-    status.value = 'Network error. Please try again.';
+    status.value = 'Error. Please try again.';
     statusClass.value = 'error';
   }
 }

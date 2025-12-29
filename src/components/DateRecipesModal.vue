@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useRecipesStore } from '@/stores/recipes';
 
 interface Recipe {
   handle: string
@@ -55,43 +56,37 @@ const formattedDate = computed(() => {
   })
 })
 
-async function fetchRecipes() {
-  if (!props.date) return
-  
-  loading.value = true
+function fetchRecipes() {
+  if (!props.date) return;
+  loading.value = true;
   try {
-    const dateStr = props.date.toISOString().split('T')[0]
-    const res = await fetch(`/api/recipes/date/${dateStr}`)
-    if (res.ok) {
-      recipes.value = await res.json()
-    } else {
-      console.error('Error fetching recipes:', res.statusText)
-      recipes.value = []
-    }
+    const dateStr = props.date.toISOString().split('T')[0];
+    const store = useRecipesStore();
+    store.load();
+    const all = store.getAll();
+    recipes.value = all.filter(r => (r.dates || []).includes(dateStr));
   } catch (err) {
-    console.error('Error fetching recipes:', err)
-    recipes.value = []
+    console.error('Error fetching recipes:', err);
+    recipes.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-async function removeRecipe(handle: string) {
-  if (!props.date) return
-  
+function removeRecipe(handle: string) {
+  if (!props.date) return;
   try {
-    const dateStr = props.date.toISOString().split('T')[0]
-    const res = await fetch(`/api/recipes/${handle}/date/${dateStr}`, {
-      method: 'DELETE'
-    })
-    if (res.ok) {
-      recipes.value = recipes.value.filter(r => r.handle !== handle)
-      emit('recipeRemoved')
+    const dateStr = props.date.toISOString().split('T')[0];
+    const store = useRecipesStore();
+    const ok = store.removeFromDate(handle, dateStr);
+    if (ok) {
+      recipes.value = recipes.value.filter(r => r.handle !== handle);
+      emit('recipeRemoved');
     } else {
-      console.error('Error removing recipe:', res.statusText)
+      console.error('Error removing recipe from date')
     }
   } catch (err) {
-    console.error('Error removing recipe:', err)
+    console.error('Error removing recipe:', err);
   }
 }
 

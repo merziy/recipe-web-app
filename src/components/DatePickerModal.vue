@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRecipesStore } from '@/stores/recipes';
 
 interface Props {
   isOpen: boolean
@@ -146,23 +147,17 @@ async function fetchDatesWithRecipes() {
     const lastDay = new Date(year, month + 1, 0)
     
     const dates = new Set<string>()
-    const promises: Promise<void>[] = []
-    
-    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-      const dateStr = getDateKey(d)
-      promises.push(
-        fetch(`/api/recipes/date/${dateStr}`)
-          .then(res => res.ok ? res.json() : [])
-          .then(recipes => {
-            if (recipes && recipes.length > 0) {
-              dates.add(dateStr)
-            }
-          })
-          .catch(() => {})
-      )
+    const store = useRecipesStore();
+    store.load();
+    for (const r of store.recipes) {
+      if (!r.dates || r.dates.length === 0) continue;
+      for (const d of r.dates) {
+        const dt = new Date(d);
+        if (dt >= firstDay && dt <= lastDay) {
+          dates.add(d);
+        }
+      }
     }
-    
-    await Promise.all(promises)
     datesWithRecipes.value = dates
   } catch (err) {
     console.error('Error fetching dates with recipes:', err)

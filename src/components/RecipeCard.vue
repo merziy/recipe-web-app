@@ -1,6 +1,6 @@
 <script setup lang="ts">
-  import { useRouter } from 'vue-router';
   import { defineProps } from 'vue';
+import { useRouter } from 'vue-router';
 
   const router = useRouter();
   const props = defineProps({
@@ -15,16 +15,25 @@
   function goToArticle() {
     router.push(`/article/${props.handle}`);
   }
+
+const imageSrc = (() => {
+  try {
+    return new URL('../assets/chicken-and-rice.jpg', import.meta.url).href;
+  } catch (e) {
+    return '';
+  }
+})();
 </script>
 
 <template>
   <section @click="goToArticle" style="cursor:pointer;">
     <div class="green-bar" aria-hidden="true"></div>
     <img
-      src="@/assets/chicken-and-rice.jpg" 
+      v-if="imageSrc"
+      :src="imageSrc"
       width="120"
       height="115"
-    >
+    />
     <article>
       <p>{{ props.title }}</p>
       <h3>{{ props.description }}</h3>

@@ -21,9 +21,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import RecipeCard from './RecipeCard.vue';
 import { useRouter } from 'vue-router';
+import { useRecipesStore } from '@/stores/recipes';
 
 const router = useRouter();
 const currentDate = computed(() => {
@@ -36,13 +37,11 @@ const currentDate = computed(() => {
   return `${getWeekday}, ${month} ${day}, ${year}`;
 });
 
-const recipes = ref([]);
+const store = useRecipesStore();
+const recipes = computed(() => store.recipes);
 
-onMounted(async () => {
-  const res = await fetch('/api/recipes');
-  if (res.ok) {
-    recipes.value = await res.json();
-  }
+onMounted(() => {
+  store.load();
 });
 
 function goToArticle(handle: string) {

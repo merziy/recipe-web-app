@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-  import { RouterLink, RouterView } from 'vue-router'
-  import Header from './components/Header.vue'
-  import Sidebar from './components/Sidebar.vue';
   import { ref } from 'vue';
+import { RouterView } from 'vue-router';
+import Header from './components/Header.vue';
+import Sidebar from './components/Sidebar.vue';
 
   const sidebarOpen = ref(false);
 
@@ -15,12 +15,8 @@
   <header>
     <div class="wrapper">
       <Header @toggle-sidebar="toggleSidebar" />
-      <Sidebar v-if="sidebarOpen"/>
+      <Sidebar v-if="sidebarOpen" @close="sidebarOpen = false" />
       <RouterView v-else />
-      <!-- <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav> -->
     </div>
   </header>
 
