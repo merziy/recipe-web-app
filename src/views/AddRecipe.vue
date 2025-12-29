@@ -7,6 +7,10 @@
         <input v-model="title" required />
       </label>
       <label>
+        Image:
+        <input type="file" accept="image/*" @change="onImageChange" />
+      </label>
+      <label>
         Description:
         <textarea v-model="description" required></textarea>
       </label>
@@ -18,24 +22,25 @@
         Prep Time:
         <input v-model="prepTime" required />
       </label>
-        <label>
-          Cook Time:
-          <input v-model="cookTime" required />
-        </label>
-        <label>
-          Instructions:
-          <textarea 
-            v-model="instructionsText" 
-            rows="5"
-            placeholder="Enter instructions"
-          ></textarea>
-        </label>
-        <div class="button-group">
-          <button type="submit">Add Recipe</button>
-          <button type="button" @click="cancel">Cancel</button>
-        </div>
+      <label>
+        Cook Time:
+        <input v-model="cookTime" required />
+      </label>
+      <label>
+        Instructions:
+        <textarea
+          v-model="instructionsText"
+          rows="5"
+          placeholder="Enter instructions, one per line"
+        ></textarea>
+      </label>
+      <div class="button-group">
+        <button type="submit">Add Recipe</button>
+        <button type="button" @click="cancel">Cancel</button>
+      </div>
     </form>
-    <p v-if="status">{{ status }}</p>
+
+    <p v-if="status" :class="statusClass">{{ status }}</p>
   </main>
 </template>
 
@@ -49,14 +54,29 @@ const description = ref('')
 const servings = ref(1)
 const prepTime = ref('')
 const cookTime = ref('')
-const status = ref('')
 const instructionsText = ref('')
+const imageFile = ref<File | null>(null)
+const imagePreview = ref<string | null>(null)
+const status = ref('')
+const statusClass = ref('')
 
 const router = useRouter()
 const store = useRecipesStore()
 
 function cancel() {
   router.push('/')
+}
+
+function onImageChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  const file = input.files[0]
+  imageFile.value = file
+  const reader = new FileReader()
+  reader.onload = () => {
+    imagePreview.value = reader.result as string
+  }
+  reader.readAsDataURL(file)
 }
 
 async function submitRecipe() {
@@ -83,17 +103,36 @@ async function submitRecipe() {
   }
 
   try {
-    const saved = store.add(recipe)
+    const API_BASE = import.meta.env.VITE_API_URL || ''
+    if (imageFile.value) {
+      const form = new FormData()
+      form.append('file', imageFile.value)
+      const upl = await fetch(`${API_BASE}/api/uploads`, { method: 'POST', body: form })
+      if (upl.ok) {
+        const d = await upl.json()
+        recipe.image = d.url
+      }
+    }
+
+    const saved = await store.add(recipe)
     status.value = 'Recipe saved!'
+    statusClass.value = 'success'
     title.value = ''
     description.value = ''
     servings.value = 1
     prepTime.value = ''
     cookTime.value = ''
     instructionsText.value = ''
-    router.push(`/article/${saved.handle}`)
+    imageFile.value = null
+    imagePreview.value = null
+    if (saved && (saved as any).handle) {
+      router.push(`/article/${(saved as any).handle}`)
+    } else {
+      router.push('/')
+    }
   } catch (err) {
     status.value = 'Error saving recipe.'
+    statusClass.value = 'error'
   }
 }
 </script>

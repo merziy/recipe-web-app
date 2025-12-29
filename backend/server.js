@@ -1,12 +1,23 @@
 import express from 'express';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { MongoClient } from 'mongodb';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import multer from 'multer';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
-const port = 3000;
-const path = __dirname + '/../dist/';
+const port = process.env.PORT || 3000;
+const distPath = join(__dirname, '..', 'dist');
+const uploadDir = join(__dirname, '..', 'public', 'uploads');
+
+fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.\-]/g, '_')}`),
+});
+const upload = multer({ storage });
 
 app.use(express.json());
 
@@ -27,8 +38,8 @@ function checkDatabase(res) {
   return null;
 }
 
-const mongoUrl = 'mongodb://localhost:27017';
-const dbName = 'recipeApp';
+const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
+const dbName = process.env.MONGO_DB || 'recipeApp';
 let db;
 let mongoClient;
 
@@ -62,6 +73,20 @@ app.post('/api/recipes', async (req, res) => {
   }
 });
 
+app.post('/api/uploads', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    let host = req.get('host') || `localhost:${port}`;
+    if (!host.includes(':')) host = `${host}:${port}`;
+    const url = `${req.protocol}://${host}/uploads/${req.file.filename}`;
+    res.json({ url });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
 app.get('/api/recipes', async (req, res) => {
   try {
     if (checkDatabase(res)) return;
@@ -80,9 +105,10 @@ app.put('/api/recipes/:handle', async (req, res) => {
     
     const { handle } = req.params;
     const recipe = req.body;
+    const { _id, ...updatable } = recipe;
     const result = await db.collection('recipes').updateOne(
       { handle },
-      { $set: recipe }
+      { $set: updatable }
     );
     if (result.matchedCount === 0) {
       return res.status(404).json({ error: 'Recipe not found' });
@@ -170,11 +196,33 @@ app.delete('/api/recipes/:handle/date/:date', async (req, res) => {
   }
 });
 
-app.use(express.static(path));
+app.delete('/api/recipes/:handle', async (req, res) => {
+  try {
+    if (checkDatabase(res)) return;
 
-app.use((req, res) => {
-  res.sendFile(`${path}index.html`);
+    const { handle } = req.params;
+    const result = await db.collection('recipes').deleteOne({ handle });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Recipe not found' });
+    }
+    await db.collection('recipeDates').deleteMany({ recipeHandle: handle });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting recipe:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
+
+app.use('/uploads', express.static(uploadDir));
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.use((req, res) => {
+    res.sendFile('index.html', { root: distPath });
+  });
+} else {
+  console.log('dist folder not found — skipping static SPA serving (development mode)');
+}
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}...`);

@@ -53,16 +53,6 @@ import DateRecipesModal from './DateRecipesModal.vue';
     return `${month}, ${year}`;
   });
 
-  const formatSelectedDate = computed(() => {
-    if (!dateStore.selectedDate) return '';
-    return dateStore.selectedDate.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  });
-
   const weeks = computed(() => {
     const year = new Date().getFullYear();
     const month = new Date().getMonth();
@@ -137,17 +127,20 @@ import DateRecipesModal from './DateRecipesModal.vue';
       const month = new Date().getMonth();
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
-      
-      const dates = new Set<string>();
       const store = useRecipesStore();
-      store.load();
-      for (const r of store.recipes) {
-        if (!r.dates || r.dates.length === 0) continue;
-        for (const d of r.dates) {
-          const dt = new Date(d);
-          if (dt >= firstDay && dt <= lastDay) dates.add(d);
-        }
+      const dates = new Set<string>();
+
+      const dateKeys: string[] = [];
+      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+        dateKeys.push(d.toISOString().split('T')[0]);
       }
+
+      const promises = dateKeys.map((k) => store.getRecipesForDate(k));
+      const results = await Promise.all(promises);
+      results.forEach((list, idx) => {
+        if (Array.isArray(list) && list.length > 0) dates.add(dateKeys[idx]);
+      });
+
       datesWithRecipes.value = dates;
     } catch (err) {
       console.error('Error fetching dates with recipes:', err);
@@ -164,10 +157,6 @@ import DateRecipesModal from './DateRecipesModal.vue';
   function closeModal() {
     modalOpen.value = false;
     selectedDateForModal.value = null;
-  }
-
-  function clearSelection() {
-    dateStore.clearSelectedDate();
   }
 
   onMounted(() => {

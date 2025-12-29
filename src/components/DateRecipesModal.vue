@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
 import { useRecipesStore } from '@/stores/recipes';
+import { computed, ref, watch } from 'vue';
 
 interface Recipe {
   handle: string
@@ -56,15 +56,14 @@ const formattedDate = computed(() => {
   })
 })
 
-function fetchRecipes() {
+async function fetchRecipes() {
   if (!props.date) return;
   loading.value = true;
   try {
     const dateStr = props.date.toISOString().split('T')[0];
     const store = useRecipesStore();
-    store.load();
-    const all = store.getAll();
-    recipes.value = all.filter(r => (r.dates || []).includes(dateStr));
+    const list = await store.getRecipesForDate(dateStr);
+    recipes.value = list;
   } catch (err) {
     console.error('Error fetching recipes:', err);
     recipes.value = [];
@@ -73,12 +72,12 @@ function fetchRecipes() {
   }
 }
 
-function removeRecipe(handle: string) {
+async function removeRecipe(handle: string) {
   if (!props.date) return;
   try {
     const dateStr = props.date.toISOString().split('T')[0];
     const store = useRecipesStore();
-    const ok = store.removeFromDate(handle, dateStr);
+    const ok = await store.removeFromDate(handle, dateStr);
     if (ok) {
       recipes.value = recipes.value.filter(r => r.handle !== handle);
       emit('recipeRemoved');

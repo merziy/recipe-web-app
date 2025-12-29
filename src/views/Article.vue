@@ -7,10 +7,10 @@
     <div class="content">
       <h1 class="title">{{ recipe.title }}</h1>
 
-      <div class="actions">
+      <div class="actions" ref="actionsRef">
         <button class="action" @click="navigateToEdit">✏️<span>Edit</span></button>
         <button class="action" @click="openDatePicker">➕<span>Save to list</span></button>
-        <button class="action">⋯<span>More</span></button>
+        <button class="action" @click="openMore" ref="moreBtn">⋯<span>More</span></button>
       </div>
 
       <div class="meta-row">
@@ -32,7 +32,7 @@
       <section class="description">
         <p v-if="recipe.description" class="lead">{{ recipe.description }}</p>
         <div class="instructions">
-          <p v-for="(instruction, index) in recipe.instructions" :key="index">
+          <p v-for="(instruction, index) in recipe.instructions || []" :key="index">
             {{ instruction }}
           </p>
         </div>
@@ -41,6 +41,21 @@
   </article>
   <div v-else>
     <p>Recipe not found.</p>
+  </div>
+
+  <div v-if="moreOpen" class="modal-backdrop" @click.self="closeMore">
+    <div class="modal" :style="modalStyle">
+      <h3>Options</h3>
+      <div v-if="!deleteConfirm">
+        <button class="danger" @click="beginDelete">Delete recipe</button>
+        <button @click="closeMore">Close</button>
+      </div>
+      <div v-else class="confirm-block">
+        <p class="confirm-text">Are you sure? Click <strong>Confirm Delete</strong> to delete this recipe.</p>
+        <button class="danger" @click="confirmDelete">Confirm Delete</button>
+        <button @click="cancelDelete">Cancel</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -55,26 +70,88 @@ const router = useRouter();
 const recipe = ref<any>(null);
 const saveMessage = ref('');
 const datePickerOpen = ref(false);
+const moreOpen = ref(false);
+const deleteConfirm = ref(false);
+const moreBtn = ref<HTMLElement | null>(null);
+const modalStyle = ref<Record<string, string>>({});
+
+const ASSET_MAP = import.meta.glob('../assets/*', { eager: true, as: 'url' }) as Record<string, string>;
+
 const imageSrc = computed(() => {
   if (!recipe.value || !recipe.value.image) return null;
-  try {
-    return new URL(`../assets/${recipe.value.image}`, import.meta.url).href;
-  } catch (err) {
+  const img = recipe.value.image;
+  if (typeof img === 'string') {
+    if (img.startsWith('data:') || img.startsWith('http')) return img;
+    if (img.startsWith('/')) return img;
+
+    const candidate = `../assets/${img}`;
+    if (ASSET_MAP[candidate]) return ASSET_MAP[candidate];
+
+    for (const key in ASSET_MAP) {
+      if (key.endsWith(img)) return ASSET_MAP[key];
+    }
+
     return null;
   }
+  return null;
 });
+
 const saveMessageClass = computed(() => {
-  return saveMessage.value.includes('Error') || saveMessage.value.includes('Please') 
-    ? 'error-message' 
+  return saveMessage.value.includes('Error') || saveMessage.value.includes('Please')
+    ? 'error-message'
     : 'success-message';
 });
 
-onMounted(() => {
+onMounted(async () => {
   const handle = route.params.handle as string;
   const store = useRecipesStore();
-  store.load();
+  await store.load();
   recipe.value = store.getByHandle(handle) as any;
 });
+
+function openMore() {
+  moreOpen.value = true;
+  requestAnimationFrame(() => {
+    const btn = moreBtn.value as HTMLElement | null;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const top = rect.top + window.scrollY;
+    const left = rect.right + 8 + window.scrollX;
+    modalStyle.value = {
+      position: 'absolute',
+      top: `${top}px`,
+      left: `${left}px`,
+      zIndex: '1001',
+    };
+  });
+}
+
+function closeMore() {
+  moreOpen.value = false;
+  deleteConfirm.value = false;
+}
+
+async function confirmDelete() {
+  if (!recipe.value) return;
+  const store = useRecipesStore();
+  const removed = await store.remove(recipe.value.handle);
+  deleteConfirm.value = false;
+  moreOpen.value = false;
+  if (removed) {
+    router.push('/');
+  } else {
+    saveMessage.value = 'Error deleting recipe.';
+    setTimeout(() => (saveMessage.value = ''), 3000);
+  }
+}
+
+function beginDelete() {
+  deleteConfirm.value = true;
+}
+
+function cancelDelete() {
+  deleteConfirm.value = false;
+}
 
 function navigateToEdit() {
   if (recipe.value) {
@@ -94,20 +171,20 @@ function handleDateSelected(date: Date) {
   if (!recipe.value) return;
 
   const selectedDate = date.toISOString().split('T')[0];
-  const formattedDate = date.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const formattedDate = date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 
   saveRecipeToDate(selectedDate, formattedDate);
 }
 
-function saveRecipeToDate(dateStr: string, formattedDate: string) {
+async function saveRecipeToDate(dateStr: string, formattedDate: string) {
   if (!recipe.value) return;
   const store = useRecipesStore();
-  const res = store.saveToDate(recipe.value.handle, dateStr);
+  const res = await store.saveToDate(recipe.value.handle, dateStr);
   if (res.ok) {
     saveMessage.value = `Recipe saved to ${formattedDate} successfully!`;
   } else {
@@ -120,6 +197,50 @@ function saveRecipeToDate(dateStr: string, formattedDate: string) {
 </script>
 
 <style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: block;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.3);
+  min-width: 200px;
+}
+
+.modal .danger {
+  background: #c62828;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.modal button {
+  background: #eee;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-text {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+}
+
+.confirm-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 .error-message {
   color: #ff4444;
   padding: 0.5em;

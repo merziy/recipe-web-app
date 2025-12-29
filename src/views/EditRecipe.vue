@@ -8,6 +8,12 @@
         Title:
         <input v-model="title" required />
       </label>
+      <label class="file-input">
+        <span class="file-label">Image:</span>
+        <span class="file-button">Choose file</span>
+        <input type="file" accept="image/*" @change="onImageChange" />
+        <span class="file-name">{{ imageFile ? imageFile.name : (currentImageName || 'No file chosen') }}</span>
+      </label>
       <label>
         Description:
         <textarea v-model="description" required></textarea>
@@ -42,9 +48,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useRecipesStore } from '@/stores/recipes';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
@@ -54,10 +60,24 @@ const servings = ref(1);
 const prepTime = ref('');
 const cookTime = ref('');
 const instructionsText = ref('');
+const imageFile = ref<File | null>(null);
 const status = ref('');
 const loading = ref(true);
 const error = ref('');
 const recipe = ref<any>(null);
+
+const currentImageName = computed(() => {
+  if (imageFile.value) return imageFile.value.name;
+  const img = recipe.value && recipe.value.image;
+  if (!img) return '';
+  try {
+    const u = new URL(img);
+    const parts = u.pathname.split('/');
+    return parts[parts.length - 1] || img;
+  } catch (e) {
+    return typeof img === 'string' ? img : '';
+  }
+});
 
 const statusClass = ref('');
 
@@ -65,7 +85,7 @@ onMounted(async () => {
   const handle = route.params.handle as string;
   const store = useRecipesStore();
   try {
-    store.load();
+    await store.load();
     recipe.value = store.getByHandle(handle) as any;
     if (recipe.value) {
       title.value = recipe.value.title || '';
@@ -96,7 +116,7 @@ async function submitRecipe() {
     .map(line => line.trim())
     .filter(line => line.length > 0);
 
-  const updatedRecipe = {
+    const updatedRecipe = {
     ...recipe.value,
     title: title.value,
     description: description.value,
@@ -104,11 +124,23 @@ async function submitRecipe() {
     prepTime: prepTime.value,
     cookTime: cookTime.value,
     instructions: instructions.length > 0 ? instructions : recipe.value.instructions || [],
+    image: recipe.value.image,
   };
 
   try {
     const store = useRecipesStore();
-    const ok = store.update(recipe.value.handle, updatedRecipe as any);
+    const API_BASE = import.meta.env.VITE_API_URL || ''
+    if (imageFile.value) {
+      const form = new FormData()
+      form.append('file', imageFile.value)
+      const upl = await fetch(`${API_BASE}/api/uploads`, { method: 'POST', body: form })
+      if (upl.ok) {
+        const d = await upl.json()
+        updatedRecipe.image = d.url
+      }
+    }
+
+    const ok = await store.update(recipe.value.handle, updatedRecipe as any);
     if (ok) {
       status.value = 'Recipe updated successfully!';
       statusClass.value = 'success';
@@ -131,6 +163,15 @@ function cancel() {
   } else {
     router.push('/');
   }
+}
+
+function onImageChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  const file = input.files[0]
+  imageFile.value = file
+  const reader = new FileReader()
+  reader.readAsDataURL(file)
 }
 </script>
 
@@ -180,6 +221,39 @@ button[type="button"] {
 
 button:hover {
   opacity: 0.9;
+}
+
+.file-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.file-input input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.file-button {
+  background: #eee;
+  border: 1px solid #ccc;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.file-name {
+  font-size: 0.9rem;
+  color: #333;
+}
+.preview {
+  display: block;
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: cover;
+  margin-left: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
 }
 
 p.success {

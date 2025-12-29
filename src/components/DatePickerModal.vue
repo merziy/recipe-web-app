@@ -47,8 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
 import { useRecipesStore } from '@/stores/recipes';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
   isOpen: boolean
@@ -148,16 +148,19 @@ async function fetchDatesWithRecipes() {
     
     const dates = new Set<string>()
     const store = useRecipesStore();
-    store.load();
-    for (const r of store.recipes) {
-      if (!r.dates || r.dates.length === 0) continue;
-      for (const d of r.dates) {
-        const dt = new Date(d);
-        if (dt >= firstDay && dt <= lastDay) {
-          dates.add(d);
-        }
-      }
+
+    const checks: Promise<void>[] = []
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      const dateStr = getDateKey(new Date(d))
+      checks.push(
+        (async () => {
+          const has = await store.hasRecipesOnDate(dateStr)
+          if (has) dates.add(dateStr)
+        })()
+      )
     }
+
+    await Promise.all(checks)
     datesWithRecipes.value = dates
   } catch (err) {
     console.error('Error fetching dates with recipes:', err)
