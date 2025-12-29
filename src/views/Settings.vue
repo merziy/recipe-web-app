@@ -25,7 +25,6 @@ function clearData() {
   try {
     localStorage.removeItem('recipe_app_recipes_v1');
     store.recipes.length = 0;
-    store.persist();
   } finally {
     clearing.value = false;
   }
