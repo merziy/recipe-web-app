@@ -15,6 +15,7 @@
       :prepTime="recipe.prepTime"
       :cookTime="recipe.cookTime"
       :handle="recipe.handle"
+      :image="recipe.image"
       @click="goToArticle(recipe.handle)"
     />
   </div>
