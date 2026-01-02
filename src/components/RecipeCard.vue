@@ -2,25 +2,29 @@
 import { useRouter } from 'vue-router';
 
   const router = useRouter();
-  const props = defineProps({
-    title: String,
-    description: String,
-    servings: Number,
-    prepTime: String,
-    cookTime: String,
-    handle: String,
-  });
+const props = defineProps({
+  title: String,
+  description: String,
+  servings: Number,
+  prepTime: String,
+  cookTime: String,
+  handle: String,
+  image: String,
+});
 
-  function goToArticle() {
-    router.push(`/article/${props.handle}`);
-  }
+function goToArticle() {
+  router.push(`/article/${props.handle}`);
+}
 
 const imageSrc = (() => {
-  try {
-    return new URL('../assets/chicken-and-rice.jpg', import.meta.url).href;
-  } catch (e) {
+  const img = props.image;
+  if (!img) return '';
+  if (typeof img === 'string') {
+    if (img.startsWith('data:') || img.startsWith('http')) return img;
+    if (img.startsWith('/')) return img;
     return '';
   }
+  return '';
 })();
 </script>
 
