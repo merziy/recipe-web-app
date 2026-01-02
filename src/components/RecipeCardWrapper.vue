@@ -22,10 +22,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted } from 'vue';
-import RecipeCard from './RecipeCard.vue';
-import { useRouter } from 'vue-router';
 import { useRecipesStore } from '@/stores/recipes';
+import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import RecipeCard from './RecipeCard.vue';
 
 const router = useRouter();
 const currentDate = computed(() => {

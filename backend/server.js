@@ -77,9 +77,7 @@ app.post('/api/uploads', upload.single('file'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    let host = req.get('host') || `localhost:${port}`;
-    if (!host.includes(':')) host = `${host}:${port}`;
-    const url = `${req.protocol}://${host}/uploads/${req.file.filename}`;
+    const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     res.json({ url });
   } catch (err) {
     console.error('Upload error:', err);
