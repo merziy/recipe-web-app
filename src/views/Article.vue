@@ -43,8 +43,9 @@
     <p>Recipe not found.</p>
   </div>
 
-  <div v-if="moreOpen" class="modal-backdrop" @click.self="closeMore">
-    <div class="modal" :style="modalStyle">
+  <div v-if="moreOpen">
+    <div class="popover-backdrop" @click.self="closeMore"></div>
+    <div class="popover-modal" :style="modalStyle">
       <h3>Options</h3>
       <div v-if="!deleteConfirm">
         <button class="danger" @click="beginDelete">Delete recipe</button>
@@ -75,7 +76,7 @@ const deleteConfirm = ref(false);
 const moreBtn = ref<HTMLElement | null>(null);
 const modalStyle = ref<Record<string, string>>({});
 
-const ASSET_MAP = import.meta.glob('../assets/*', { eager: true, as: 'url' }) as Record<string, string>;
+const ASSET_MAP = import.meta.glob('../assets/*?url', { eager: true, import: 'default' }) as Record<string, string>;
 
 const imageSrc = computed(() => {
   if (!recipe.value || !recipe.value.image) return null;
@@ -115,13 +116,14 @@ function openMore() {
     const btn = moreBtn.value as HTMLElement | null;
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const top = rect.top + window.scrollY;
-    const left = rect.right + 8 + window.scrollX;
+    const top = rect.bottom + window.scrollY + 6;
+    const left = rect.left + window.scrollX;
     modalStyle.value = {
       position: 'absolute',
       top: `${top}px`,
       left: `${left}px`,
       zIndex: '1001',
+      minWidth: `${rect.width + 40}px`,
     };
   });
 }
@@ -196,24 +198,25 @@ async function saveRecipeToDate(dateStr: string, formattedDate: string) {
 }
 </script>
 
-<style scoped>
-.modal-backdrop {
+<style>
+.popover-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: block;
+  background: transparent;
   z-index: 1000;
 }
 
-.modal {
+.popover-modal {
   background: #fff;
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 6px 30px rgba(0,0,0,0.3);
   min-width: 200px;
+  position: absolute;
+  z-index: 1001;
 }
 
-.modal .danger {
+.popover-modal .danger {
   background: #c62828;
   color: white;
   border: none;
@@ -221,14 +224,22 @@ async function saveRecipeToDate(dateStr: string, formattedDate: string) {
   border-radius: 4px;
   cursor: pointer;
   margin-right: 0.5rem;
+  transition: background 0.15s;
+}
+.popover-modal .danger:hover {
+  background: #a31515;
 }
 
-.modal button {
+.popover-modal button {
   background: #eee;
   border: none;
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
   cursor: pointer;
+  transition: background 0.15s;
+}
+.popover-modal button:hover {
+  background: #ddd;
 }
 
 .confirm-text {
