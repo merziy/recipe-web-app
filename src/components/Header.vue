@@ -1,9 +1,8 @@
 <script setup lang="ts">
-  import { ArrowLeft, IconoirProvider, Menu, Plus } from '@iconoir/vue';
-  import { RouterLink } from 'vue-router';
-  import { defineEmits } from 'vue';
+import { ArrowLeft, IconoirProvider, Menu, Plus } from '@iconoir/vue';
+import { RouterLink } from 'vue-router';
 
-  const emit = defineEmits(['toggle-sidebar']);
+const emit = defineEmits(['toggle-sidebar']);
 </script>
 
 <template>
@@ -55,6 +54,5 @@ button {
   font-weight: 500;
   font-size: 1.6rem;
   position: relative;
-  top: -10px;
 }
 </style>

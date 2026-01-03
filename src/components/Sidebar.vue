@@ -1,11 +1,13 @@
 <template>
-    <nav class="sidebar">
-        <ul>
-            <li>
-                <RouterLink to="/settings" @click="close">Settings</RouterLink>
-            </li>
-        </ul>
-    </nav>
+    <div class="sidebar-wrapper">
+        <aside class="sidebar">
+            <ul>
+                <li>
+                    <RouterLink to="/settings" @click="close">Settings</RouterLink>
+                </li>
+            </ul>
+        </aside>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -17,14 +19,30 @@ function close() {
 </script>
 
 <style scoped>
-    .sidebar {
-        padding: 1em;
-    }
-    ul {
-        list-style: none;
-        padding: 0;
-    }
-    li {
-        margin-bottom: 0.5em;
-    }
+.sidebar-wrapper {
+    position: absolute;
+    top: 47px;
+    left: 0;
+    width: 100vw;
+    z-index: 1000;
+}
+
+aside.sidebar {
+    padding: 1em;
+    min-height: calc(100vh - 56px);
+    width: 100vw;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: var(--color-background, #fff);
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+.sidebar li {
+    margin-bottom: 0.5em;
+}
 </style>

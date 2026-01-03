@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-  import { ref } from 'vue';
+import { ref } from 'vue';
 import { RouterView } from 'vue-router';
 import Header from './components/Header.vue';
 import Sidebar from './components/Sidebar.vue';
@@ -12,34 +12,28 @@ import Sidebar from './components/Sidebar.vue';
 </script>
 
 <template>
-  <header>
-    <div class="wrapper">
-      <Header @toggle-sidebar="toggleSidebar" />
-      <Sidebar v-if="sidebarOpen" @close="sidebarOpen = false" />
-      <RouterView v-else />
-    </div>
-  </header>
-
+  <div class="app-shell">
+    <Header @toggle-sidebar="toggleSidebar" />
+    <main class="main-content">
+      <RouterView />
+    </main>
+    <Sidebar v-if="sidebarOpen" @close="sidebarOpen = false" />
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    flex-direction: column;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.main-content {
+  flex: 1 1 auto;
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 </style>

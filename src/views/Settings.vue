@@ -34,8 +34,13 @@ function clearData() {
 <style scoped>
 main.settings {
   max-width: 700px;
-  margin: 2em auto;
+  margin: 0 auto;
   padding: 1em;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 button {
   background: #ff4444;
