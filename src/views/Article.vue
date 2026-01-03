@@ -15,8 +15,8 @@
 
       <div class="meta-row">
         <div class="meta-item">🍽️ <span>{{ recipe.servings || '-' }} Servings</span></div>
-        <div class="meta-item">⏱️ <span>Prep: {{ recipe.prepTime || '-' }}</span></div>
-        <div class="meta-item">🔥 <span>Cook: {{ recipe.cookTime || '-' }}</span></div>
+        <div class="meta-item">⏱️ <span>Prep: {{ formattedPrepTime }}</span></div>
+        <div class="meta-item">🔥 <span>Cook: {{ formattedCookTime }}</span></div>
       </div>
 
       <div v-if="saveMessage" :class="saveMessageClass">
@@ -96,6 +96,16 @@ const imageSrc = computed(() => {
   }
   return null;
 });
+
+const formattedPrepTime = computed(() => formatMinutes(recipe.value?.prepTime));
+const formattedCookTime = computed(() => formatMinutes(recipe.value?.cookTime));
+
+function formatMinutes(val: string | number | undefined): string {
+  if (!val && val !== 0) return '-';
+  const n = Number(val);
+  if (isNaN(n)) return String(val);
+  return `${n}:00 min`;
+}
 
 const saveMessageClass = computed(() => {
   return saveMessage.value.includes('Error') || saveMessage.value.includes('Please')

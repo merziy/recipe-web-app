@@ -23,12 +23,12 @@
         <input v-model.number="servings" type="number" min="1" required />
       </label>
       <label>
-        Prep Time:
-        <input v-model="prepTime" required />
+        Prep Time (minutes):
+        <input v-model="prepTime" required placeholder="e.g. 4 for 4:00, 180 for 180:00" />
       </label>
       <label>
-        Cook Time:
-        <input v-model="cookTime" required />
+        Cook Time (minutes):
+        <input v-model="cookTime" required placeholder="e.g. 4 for 4:00, 180 for 180:00" />
       </label>
       <label v-if="recipe && recipe.instructions">
         Instructions:
