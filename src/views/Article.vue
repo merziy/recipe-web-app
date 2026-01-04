@@ -19,6 +19,13 @@
         <div class="meta-item">🔥 <span>Cook: {{ formattedCookTime }}</span></div>
       </div>
 
+      <div v-if="ingredientChips.length" class="ingredient-chips">
+        <span v-for="ingredient in ingredientChips" :key="ingredient.name" class="ingredient-chip">
+          <span class="icon">{{ ingredient.icon }}</span>
+          <span class="name">{{ ingredient.name }}</span>
+        </span>
+      </div>
+
       <div v-if="saveMessage" :class="saveMessageClass">
         {{ saveMessage }}
       </div>
@@ -60,11 +67,21 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
+import ingredientsList from '@/assets/ingredients.json';
 import DatePickerModal from '@/components/DatePickerModal.vue';
 import { useRecipesStore } from '@/stores/recipes';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+const ingredientChips = computed(() => {
+  if (!recipe.value || !Array.isArray(recipe.value.ingredients)) return [];
+  return recipe.value.ingredients.map((name: string) => {
+    const found = (ingredientsList as any[]).find((ing) => ing.name === name);
+    return found ? found : { name, icon: '❓' };
+  });
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -368,5 +385,28 @@ article img {
   margin: 0.5rem 0;
   color: #333;
   line-height: 1.5;
+}
+
+.ingredient-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin: 1em 0 0.5em 0;
+}
+.ingredient-chip {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 16px;
+  padding: 0.2em 0.7em 0.2em 0.4em;
+  font-size: 1em;
+  border: 1px solid #eee;
+}
+.ingredient-chip .icon {
+  font-size: 1.2em;
+  margin-right: 0.3em;
+}
+.ingredient-chip .name {
+  margin-right: 0.1em;
 }
 </style>

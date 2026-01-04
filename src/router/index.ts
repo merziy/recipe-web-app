@@ -30,6 +30,11 @@ const router = createRouter({
       component: () => import('../views/AddRecipe.vue'),
     },
     {
+      path: '/ingredient-search',
+      name: 'ingredient-search',
+      component: () => import('../views/IngredientSearch.vue'),
+    },
+    {
       path: '/settings',
       name: 'settings',
       component: () => import('../views/Settings.vue'),

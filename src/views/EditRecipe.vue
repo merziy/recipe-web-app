@@ -30,6 +30,10 @@
         Cook Time (minutes):
         <input v-model="cookTime" required placeholder="e.g. 4 for 4:00, 180 for 180:00" />
       </label>
+      <label>
+        Ingredients:
+        <IngredientSelector v-model="ingredients" />
+      </label>
       <label v-if="recipe && recipe.instructions">
         Instructions:
         <textarea 
@@ -48,6 +52,8 @@
 </template>
 
 <script setup lang="ts">
+
+import IngredientSelector from '@/components/IngredientSelector.vue';
 import { useRecipesStore } from '@/stores/recipes';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -60,6 +66,7 @@ const servings = ref(1);
 const prepTime = ref('');
 const cookTime = ref('');
 const instructionsText = ref('');
+const ingredients = ref<string[]>([]);
 const imageFile = ref<File | null>(null);
 const status = ref('');
 const loading = ref(true);
@@ -98,6 +105,11 @@ onMounted(async () => {
       } else {
         instructionsText.value = '';
       }
+      if (Array.isArray(recipe.value.ingredients)) {
+        ingredients.value = [...recipe.value.ingredients];
+      } else {
+        ingredients.value = [];
+      }
     } else {
       error.value = 'Recipe not found.';
     }
@@ -124,6 +136,7 @@ async function submitRecipe() {
     prepTime: prepTime.value,
     cookTime: cookTime.value,
     instructions: instructions.length > 0 ? instructions : recipe.value.instructions || [],
+    ingredients: ingredients.value,
     image: recipe.value.image,
   };
 

@@ -27,6 +27,10 @@
         <input v-model="cookTime" required placeholder="e.g. 4 for 4:00, 180 for 180:00" />
       </label>
       <label>
+        Ingredients:
+        <IngredientSelector v-model="ingredients" />
+      </label>
+      <label>
         Instructions:
         <textarea
           v-model="instructionsText"
@@ -45,6 +49,8 @@
 </template>
 
 <script setup lang="ts">
+
+import IngredientSelector from '@/components/IngredientSelector.vue'
 import { useRecipesStore } from '@/stores/recipes'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -55,6 +61,7 @@ const servings = ref(1)
 const prepTime = ref('')
 const cookTime = ref('')
 const instructionsText = ref('')
+const ingredients = ref<string[]>([])
 const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const status = ref('')
@@ -99,6 +106,7 @@ async function submitRecipe() {
     cookTime: cookTime.value,
     handle: handleBase,
     instructions,
+    ingredients: ingredients.value,
     image: 'chicken-and-rice.jpg',
   }
 
@@ -123,6 +131,7 @@ async function submitRecipe() {
     prepTime.value = ''
     cookTime.value = ''
     instructionsText.value = ''
+    ingredients.value = []
     imageFile.value = null
     imagePreview.value = null
     if (saved && (saved as any).handle) {

@@ -3,6 +3,9 @@
         <aside class="sidebar">
             <ul>
                 <li>
+                    <RouterLink to="/ingredient-search" @click="close">Ingredient Search</RouterLink>
+                </li>
+                <li>
                     <RouterLink to="/settings" @click="close">Settings</RouterLink>
                 </li>
             </ul>
