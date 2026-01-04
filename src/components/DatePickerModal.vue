@@ -30,7 +30,7 @@
                   v-for="(day, index) in week"
                   :key="index"
                   :class="getDayClass(day)"
-                  @click="day ? selectDate(day) : null"
+                  @click="day && !isPastDate(day) ? selectDate(day) : null"
                 >
                   <div class="date-cell-content">
                     <span>{{ day ? day.getDate() : '' }}</span>
@@ -125,8 +125,17 @@ const getDayClass = (day: Date | null) => {
   if (dayMonth !== currentMonth) {
     classes.push('gray-date')
   }
+  if (isPastDate(day)) {
+    classes.push('disabled-date')
+  }
 
   return classes.join(' ')
+}
+
+function isPastDate(day: Date): boolean {
+  const today = new Date()
+  today.setHours(0,0,0,0)
+  return day < today
 }
 
 function previousMonth() {
@@ -311,6 +320,14 @@ td:hover {
 
 .gray-date {
   color: #5F5A5A;
+}
+
+.disabled-date {
+  color: #bbb !important;
+  background: #f7f7f7 !important;
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .date-cell-content {
