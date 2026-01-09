@@ -1,40 +1,40 @@
 :root {
   --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
-
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
-
+  --vt-c-white-soft: #f6f8fa;
+  --vt-c-white-mute: #e9ecef;
+  --vt-c-black: #181a1b;
+  --vt-c-black-soft: #23272f;
+  --vt-c-black-mute: #2d333b;
   --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-}
-
-:root {
+  --vt-c-primary: #4f8cff;
+  --vt-c-primary-light: #e3f0ff;
+  --vt-c-primary-dark: #1a4fa3;
+  --vt-c-accent: #00c896;
+  --vt-c-accent-light: #e6fff7;
+  --vt-c-accent-dark: #008c6e;
+  --vt-c-divider-light-1: rgba(60, 60, 60, 0.18);
+  --vt-c-divider-light-2: rgba(60, 60, 60, 0.08);
+  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.45);
+  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.28);
+  --vt-c-text-light-1: #23272f;
+  --vt-c-text-light-2: #5c6370;
+  --vt-c-text-dark-1: #fff;
+  --vt-c-text-dark-2: #bfc7d5;
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
-
   --color-border: var(--vt-c-divider-light-2);
   --color-border-hover: var(--vt-c-divider-light-1);
-
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
+  --color-primary: var(--vt-c-primary);
+  --color-primary-light: var(--vt-c-primary-light);
+  --color-primary-dark: var(--vt-c-primary-dark);
+  --color-accent: var(--vt-c-accent);
+  --color-accent-light: var(--vt-c-accent-light);
+  --color-accent-dark: var(--vt-c-accent-dark);
+  --section-gap: 120px;
 }
-
-
 
 *,
 *::before,
@@ -49,14 +49,18 @@ body {
   color: var(--color-text);
   background: var(--color-background);
   transition:
-    color 0.5s,
-    background-color 0.5s;
-  line-height: 1.6;
+    color 0.4s,
+    background-color 0.4s;
+  line-height: 1.7;
   font-family:
     'Fredoka',
-    serif;
-  font-size: 15px;
+    'Inter',
+    'Segoe UI',
+    Arial,
+    sans-serif;
+  font-size: 16px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.01em;
   -moz-osx-font-smoothing: grayscale;
 }

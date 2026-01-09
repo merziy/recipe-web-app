@@ -26,14 +26,19 @@ import Sidebar from './components/Sidebar.vue';
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
 }
 
 .main-content {
   flex: 1 1 auto;
-  width: 100vw;
-  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
 }
 </style>

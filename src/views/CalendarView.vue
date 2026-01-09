@@ -22,10 +22,10 @@ import { RouterView } from 'vue-router';
   flex-direction: row;
   gap: 2.5rem;
   align-items: flex-start;
-  width: 100vw;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
   box-sizing: border-box;
 }
 .left-pane, .right-pane {
@@ -40,11 +40,11 @@ import { RouterView } from 'vue-router';
   .calendar-layout {
     flex-direction: column-reverse;
     gap: 1.2rem;
-    width: 100vw;
-    min-height: unset;
+    width: 100%;
+    max-width: 600px;
   }
   .left-pane, .right-pane {
-    width: 100vw;
+    width: 100%;
     max-width: none;
     min-width: 0;
     flex: none;
