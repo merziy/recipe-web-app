@@ -55,7 +55,7 @@
 
 import IngredientSelector from '@/components/IngredientSelector.vue';
 import { useRecipesStore } from '@/stores/recipes';
-import { compressImage } from '@/utils/imageUtils';
+import { useImageUpload } from '@/composables/useImageUpload';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -143,49 +143,31 @@ async function submitRecipe() {
 
   try {
     const store = useRecipesStore();
-    const API_BASE = import.meta.env.VITE_API_URL || ''
+    
     if (imageFile.value) {
       try {
-        const compressedBase64 = await compressImage(imageFile.value, 800, 0.8)
-        const upl = await fetch(`${API_BASE}/api/uploads`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ file: compressedBase64 })
-        })
-        if (upl.ok) {
-          const d = await upl.json()
-          updatedRecipe.image = d.url
-        }
-        
-        const ok = await store.update(recipe.value.handle, updatedRecipe as any);
-        if (ok) {
-          status.value = 'Recipe updated successfully!';
-          statusClass.value = 'success';
-          setTimeout(() => {
-            router.push(`/article/${recipe.value.handle}`);
-          }, 600);
-        } else {
-          status.value = 'Error: Failed to update recipe';
-          statusClass.value = 'error';
-        }
-      } catch (err) {
-        status.value = 'Upload failed!';
-        statusClass.value = 'error';
-      }
-    } else {
-      const ok = await store.update(recipe.value.handle, updatedRecipe as any);
-      if (ok) {
-        status.value = 'Recipe updated successfully!';
-        statusClass.value = 'success';
-        setTimeout(() => {
-          router.push(`/article/${recipe.value.handle}`);
-        }, 600);
-      } else {
-        status.value = 'Error: Failed to update recipe';
-        statusClass.value = 'error';
+        const { uploadImage } = useImageUpload();
+        const imageUrl = await uploadImage(imageFile.value);
+        updatedRecipe.image = imageUrl;
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        // Still update recipe without new image if upload fails
       }
     }
+    
+    const ok = await store.update(recipe.value.handle, updatedRecipe as any);
+    if (ok) {
+      status.value = 'Recipe updated successfully!';
+      statusClass.value = 'success';
+      setTimeout(() => {
+        router.push(`/article/${recipe.value.handle}`);
+      }, 600);
+    } else {
+      status.value = 'Error: Failed to update recipe';
+      statusClass.value = 'error';
+    }
   } catch (err) {
+    console.error('Error updating recipe:', err);
     status.value = 'Error. Please try again.';
     statusClass.value = 'error';
   }
