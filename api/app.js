@@ -1,7 +1,7 @@
-import express from 'express';
-import { MongoClient } from 'mongodb';
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
+import express from 'express';
+import { MongoClient } from 'mongodb';
 
 dotenv.config();
 
@@ -26,29 +26,54 @@ app.use((req, res, next) => {
   next();
 });
 
-function checkDatabase(res) {
-  if (!db) {
-    return res.status(503).json({ error: 'Database not connected. Please check if MongoDB is running.' });
+let connectionPromise;
+
+async function connectToMongoDB() {
+  if (!connectionPromise) {
+    connectionPromise = MongoClient.connect(mongoUrl, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 5000,
+    });
   }
-  return null;
+  
+  try {
+    const client = await connectionPromise;
+    return client.db(dbName);
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    connectionPromise = null;
+    throw error;
+  }
 }
 
 const mongoUrl = process.env.MONGODB_URI || process.env.MONGO_URL || 'mongodb://localhost:27017';
 const dbName = process.env.MONGO_DB || 'recipeApp';
-let db;
-let mongoClient;
 
-async function connectToMongoDB() {
+const withTimeout = (promise, ms = 10000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms)
+    )
+  ]);
+};
+
+app.get('/api/health', async (req, res) => {
   try {
-    if (!mongoClient) {
-      mongoClient = await MongoClient.connect(mongoUrl);
-      db = mongoClient.db(dbName);
-      console.log('Connected to MongoDB');
+    await connectToMongoDB();
+    if (db) {
+      await db.admin().ping();
+      res.json({ status: 'healthy', db: 'connected' });
+    } else {
+      res.status(503).json({ status: 'unhealthy', db: 'disconnected' });
     }
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    console.error('Health check failed:', error);
+    res.status(503).json({ status: 'unhealthy', error: error.message });
   }
-}
+});
 
 app.post('/api/recipes', async (req, res) => {
   try {
@@ -57,7 +82,10 @@ app.post('/api/recipes', async (req, res) => {
     if (dbError) return dbError;
 
     const recipe = req.body;
-    const result = await db.collection('recipes').insertOne(recipe);
+    const result = await withTimeout(
+      db.collection('recipes').insertOne(recipe),
+      5000
+    );
     res.json({ 
       success: true, 
       id: result.insertedId,
@@ -101,7 +129,10 @@ app.get('/api/recipes', async (req, res) => {
     const dbError = checkDatabase(res);
     if (dbError) return dbError;
 
-    const recipes = await db.collection('recipes').find({}).toArray();
+    const recipes = await withTimeout(
+      db.collection('recipes').find({}).toArray(),
+      5000
+    );
     res.json(recipes);
   } catch (error) {
     console.error('Error fetching recipes:', error);
@@ -111,10 +142,7 @@ app.get('/api/recipes', async (req, res) => {
 
 app.put('/api/recipes/:handle', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
-
+    const db = await connectToMongoDB();
     const { handle } = req.params;
     const updatedRecipe = req.body;
     
@@ -139,10 +167,7 @@ app.put('/api/recipes/:handle', async (req, res) => {
 
 app.post('/api/recipes/:handle/date', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
-
+    const db = await connectToMongoDB();
     const { handle } = req.params;
     const { date } = req.body;
     
@@ -170,14 +195,16 @@ app.get('/api/recipes/date/:date', async (req, res) => {
 
     const { date } = req.params;
     
-    const scheduledRecipes = await db.collection('scheduledRecipes')
-      .find({ date })
-      .toArray();
+    const scheduledRecipes = await withTimeout(
+      db.collection('scheduledRecipes').find({ date }).toArray(),
+      5000
+    );
     
     const recipeHandles = scheduledRecipes.map(sr => sr.handle);
-    const recipes = await db.collection('recipes')
-      .find({ handle: { $in: recipeHandles } })
-      .toArray();
+    const recipes = await withTimeout(
+      db.collection('recipes').find({ handle: { $in: recipeHandles } }).toArray(),
+      5000
+    );
     
     res.json(recipes);
   } catch (error) {
@@ -188,10 +215,7 @@ app.get('/api/recipes/date/:date', async (req, res) => {
 
 app.delete('/api/recipes/:handle/date/:date', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
-
+    const db = await connectToMongoDB();
     const { handle, date } = req.params;
     
     const result = await db.collection('scheduledRecipes').deleteOne({
@@ -215,9 +239,7 @@ app.delete('/api/recipes/:handle/date/:date', async (req, res) => {
 
 app.delete('/api/recipes/:handle', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
+    const db = await connectToMongoDB();
 
     const { handle } = req.params;
     

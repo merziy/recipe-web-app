@@ -54,8 +54,8 @@
 <script setup lang="ts">
 
 import IngredientSelector from '@/components/IngredientSelector.vue';
-import { useRecipesStore } from '@/stores/recipes';
 import { useImageUpload } from '@/composables/useImageUpload';
+import { useRecipesStore } from '@/stores/recipes';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
