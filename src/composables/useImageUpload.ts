@@ -27,7 +27,6 @@ export function useImageUpload() {
       const sigResponse = await fetch(`${API_BASE}/api/cloudinary-signature`)
       
       if (!sigResponse.ok) {
-        const errorText = await sigResponse.text()
         throw new Error(`Failed to get upload signature: ${sigResponse.status}`)
       }
       
@@ -58,7 +57,6 @@ export function useImageUpload() {
       )
 
       if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text()
         throw new Error(`Upload failed: ${uploadResponse.status}`)
       }
 
