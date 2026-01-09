@@ -144,25 +144,49 @@ async function submitRecipe() {
     const store = useRecipesStore();
     const API_BASE = import.meta.env.VITE_API_URL || ''
     if (imageFile.value) {
-      const form = new FormData()
-      form.append('file', imageFile.value)
-      const upl = await fetch(`${API_BASE}/api/uploads`, { method: 'POST', body: form })
-      if (upl.ok) {
-        const d = await upl.json()
-        updatedRecipe.image = d.url
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string
+          const upl = await fetch(`${API_BASE}/api/uploads`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file: base64 })
+          })
+          if (upl.ok) {
+            const d = await upl.json()
+            updatedRecipe.image = d.url
+          }
+          
+          const ok = await store.update(recipe.value.handle, updatedRecipe as any);
+          if (ok) {
+            status.value = 'Recipe updated successfully!';
+            statusClass.value = 'success';
+            setTimeout(() => {
+              router.push(`/article/${recipe.value.handle}`);
+            }, 600);
+          } else {
+            status.value = 'Error: Failed to update recipe';
+            statusClass.value = 'error';
+          }
+        } catch (err) {
+          status.value = 'Upload failed!';
+          statusClass.value = 'error';
+        }
       }
-    }
-
-    const ok = await store.update(recipe.value.handle, updatedRecipe as any);
-    if (ok) {
-      status.value = 'Recipe updated successfully!';
-      statusClass.value = 'success';
-      setTimeout(() => {
-        router.push(`/article/${recipe.value.handle}`);
-      }, 600);
+      reader.readAsDataURL(imageFile.value)
     } else {
-      status.value = 'Error: Failed to update recipe';
-      statusClass.value = 'error';
+      const ok = await store.update(recipe.value.handle, updatedRecipe as any);
+      if (ok) {
+        status.value = 'Recipe updated successfully!';
+        statusClass.value = 'success';
+        setTimeout(() => {
+          router.push(`/article/${recipe.value.handle}`);
+        }, 600);
+      } else {
+        status.value = 'Error: Failed to update recipe';
+        statusClass.value = 'error';
+      }
     }
   } catch (err) {
     status.value = 'Error. Please try again.';

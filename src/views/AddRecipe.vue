@@ -112,32 +112,68 @@ async function submitRecipe() {
 
   try {
     const API_BASE = import.meta.env.VITE_API_URL || ''
+    let saved: any = null
+    
     if (imageFile.value) {
-      const form = new FormData()
-      form.append('file', imageFile.value)
-      const upl = await fetch(`${API_BASE}/api/uploads`, { method: 'POST', body: form })
-      if (upl.ok) {
-        const d = await upl.json()
-        recipe.image = d.url
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string
+          const upl = await fetch(`${API_BASE}/api/uploads`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file: base64 })
+          })
+          if (upl.ok) {
+            const d = await upl.json()
+            recipe.image = d.url
+          }
+          
+          saved = await store.add(recipe)
+          status.value = 'Recipe saved!'
+          statusClass.value = 'success'
+          
+          title.value = ''
+          description.value = ''
+          servings.value = 1
+          prepTime.value = ''
+          cookTime.value = ''
+          instructionsText.value = ''
+          ingredients.value = []
+          imageFile.value = null
+          imagePreview.value = null
+          
+          if (saved && saved.handle) {
+            router.push(`/article/${saved.handle}`)
+          } else {
+            router.push('/')
+          }
+        } catch (error) {
+          status.value = 'Upload failed!'
+          statusClass.value = 'error'
+        }
       }
-    }
-
-    const saved = await store.add(recipe)
-    status.value = 'Recipe saved!'
-    statusClass.value = 'success'
-    title.value = ''
-    description.value = ''
-    servings.value = 1
-    prepTime.value = ''
-    cookTime.value = ''
-    instructionsText.value = ''
-    ingredients.value = []
-    imageFile.value = null
-    imagePreview.value = null
-    if (saved && (saved as any).handle) {
-      router.push(`/article/${(saved as any).handle}`)
+      reader.readAsDataURL(imageFile.value)
     } else {
-      router.push('/')
+      saved = await store.add(recipe)
+      status.value = 'Recipe saved!'
+      statusClass.value = 'success'
+      
+      title.value = ''
+      description.value = ''
+      servings.value = 1
+      prepTime.value = ''
+      cookTime.value = ''
+      instructionsText.value = ''
+      ingredients.value = []
+      imageFile.value = null
+      imagePreview.value = null
+      
+      if (saved && saved.handle) {
+        router.push(`/article/${saved.handle}`)
+      } else {
+        router.push('/')
+      }
     }
   } catch (err) {
     status.value = 'Error saving recipe.'

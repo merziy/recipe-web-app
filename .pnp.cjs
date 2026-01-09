@@ -36,6 +36,7 @@ const RAW_RUNTIME_STATE =
           ["@vitejs/plugin-vue", "virtual:77b7ecc7091a1a62d3338cb5e50fe2c6168b01b0e6a9478324ed75ec4248f819ff301d5b9fc534926c196dc19c1665052494be08bb75e4519233c3b91b780d85#npm:5.2.1"],\
           ["@vue/test-utils", "npm:2.4.6"],\
           ["@vue/tsconfig", "virtual:77b7ecc7091a1a62d3338cb5e50fe2c6168b01b0e6a9478324ed75ec4248f819ff301d5b9fc534926c196dc19c1665052494be08bb75e4519233c3b91b780d85#npm:0.7.0"],\
+          ["cloudinary", "npm:1.41.3"],\
           ["express", "npm:5.1.0"],\
           ["jsdom", "virtual:77b7ecc7091a1a62d3338cb5e50fe2c6168b01b0e6a9478324ed75ec4248f819ff301d5b9fc534926c196dc19c1665052494be08bb75e4519233c3b91b780d85#npm:26.0.0"],\
           ["mongo", "npm:0.1.0"],\
@@ -2249,6 +2250,41 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["cloudinary", [\
+      ["npm:1.41.3", {\
+        "packageLocation": "../../.yarn/berry/cache/cloudinary-npm-1.41.3-8c0799a690-10c0.zip/node_modules/cloudinary/",\
+        "packageDependencies": [\
+          ["cloudinary", "npm:1.41.3"],\
+          ["cloudinary-core", "virtual:8c0799a690c94c7c3e800243205a7f680a7b20a7ef9513f995037e7f78996a8437b8648778de3c6a82019d8ca80306bfeaefa665432bea81d270376118718023#npm:2.14.0"],\
+          ["core-js", "npm:3.47.0"],\
+          ["lodash", "npm:4.17.21"],\
+          ["q", "npm:1.5.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["cloudinary-core", [\
+      ["npm:2.14.0", {\
+        "packageLocation": "../../.yarn/berry/cache/cloudinary-core-npm-2.14.0-159ae587ba-10c0.zip/node_modules/cloudinary-core/",\
+        "packageDependencies": [\
+          ["cloudinary-core", "npm:2.14.0"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:8c0799a690c94c7c3e800243205a7f680a7b20a7ef9513f995037e7f78996a8437b8648778de3c6a82019d8ca80306bfeaefa665432bea81d270376118718023#npm:2.14.0", {\
+        "packageLocation": "./.yarn/__virtual__/cloudinary-core-virtual-fea08abe9a/3/.yarn/berry/cache/cloudinary-core-npm-2.14.0-159ae587ba-10c0.zip/node_modules/cloudinary-core/",\
+        "packageDependencies": [\
+          ["cloudinary-core", "virtual:8c0799a690c94c7c3e800243205a7f680a7b20a7ef9513f995037e7f78996a8437b8648778de3c6a82019d8ca80306bfeaefa665432bea81d270376118718023#npm:2.14.0"],\
+          ["@types/lodash", null],\
+          ["lodash", "npm:4.17.21"]\
+        ],\
+        "packagePeers": [\
+          "@types/lodash",\
+          "lodash"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["color-convert", [\
       ["npm:2.0.1", {\
         "packageLocation": "../../.yarn/berry/cache/color-convert-npm-2.0.1-79730e935b-10c0.zip/node_modules/color-convert/",\
@@ -2363,6 +2399,15 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["copy-anything", "npm:3.0.5"],\
           ["is-what", "npm:4.1.16"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["core-js", [\
+      ["npm:3.47.0", {\
+        "packageLocation": "./.yarn/unplugged/core-js-npm-3.47.0-cf3c257d1a/node_modules/core-js/",\
+        "packageDependencies": [\
+          ["core-js", "npm:3.47.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3465,6 +3510,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["lodash", [\
+      ["npm:4.17.21", {\
+        "packageLocation": "../../.yarn/berry/cache/lodash-npm-4.17.21-6382451519-10c0.zip/node_modules/lodash/",\
+        "packageDependencies": [\
+          ["lodash", "npm:4.17.21"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["loupe", [\
       ["npm:3.1.3", {\
         "packageLocation": "../../.yarn/berry/cache/loupe-npm-3.1.3-81625c6ef8-10c0.zip/node_modules/loupe/",\
@@ -4266,6 +4320,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["q", [\
+      ["npm:1.5.1", {\
+        "packageLocation": "../../.yarn/berry/cache/q-npm-1.5.1-a28b3cfeaf-10c0.zip/node_modules/q/",\
+        "packageDependencies": [\
+          ["q", "npm:1.5.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["qs", [\
       ["npm:6.14.0", {\
         "packageLocation": "../../.yarn/berry/cache/qs-npm-6.14.0-6b298311eb-10c0.zip/node_modules/qs/",\
@@ -4335,6 +4398,7 @@ const RAW_RUNTIME_STATE =
           ["@vitejs/plugin-vue", "virtual:77b7ecc7091a1a62d3338cb5e50fe2c6168b01b0e6a9478324ed75ec4248f819ff301d5b9fc534926c196dc19c1665052494be08bb75e4519233c3b91b780d85#npm:5.2.1"],\
           ["@vue/test-utils", "npm:2.4.6"],\
           ["@vue/tsconfig", "virtual:77b7ecc7091a1a62d3338cb5e50fe2c6168b01b0e6a9478324ed75ec4248f819ff301d5b9fc534926c196dc19c1665052494be08bb75e4519233c3b91b780d85#npm:0.7.0"],\
+          ["cloudinary", "npm:1.41.3"],\
           ["express", "npm:5.1.0"],\
           ["jsdom", "virtual:77b7ecc7091a1a62d3338cb5e50fe2c6168b01b0e6a9478324ed75ec4248f819ff301d5b9fc534926c196dc19c1665052494be08bb75e4519233c3b91b780d85#npm:26.0.0"],\
           ["mongo", "npm:0.1.0"],\
