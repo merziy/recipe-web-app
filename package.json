@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "server": "node backend/server.js",
-    "start": "node backend/server.js",
+    "server": "node api/app.js",
+    "start": "node api/app.js",
     "test:unit": "vitest",
     "build-only": "vite build",
     "type-check": "vue-tsc --build"
@@ -16,6 +16,7 @@
   "dependencies": {
     "@iconoir/vue": "7.10.1",
     "cloudinary": "^1.41.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "mongo": "^0.1.0",
     "mongodb": "^6.20.0",

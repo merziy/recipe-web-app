@@ -1,4 +1,4 @@
-import { compressImage } from '@/utils/imageUtils'
+import { compressImageToFile } from '@/utils/imageUtils'
 import { readonly, ref } from 'vue'
 
 export function useImageUpload() {
@@ -22,21 +22,48 @@ export function useImageUpload() {
     uploadError.value = null
 
     try {
-      const compressedBase64 = await compressImage(file, 800, 0.8)
-      
       const API_BASE = import.meta.env.VITE_API_URL || ''
-      const response = await fetch(`${API_BASE}/api/uploads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file: compressedBase64 })
-      })
+      
+      const sigResponse = await fetch(`${API_BASE}/api/cloudinary-signature`)
+      
+      if (!sigResponse.ok) {
+        const errorText = await sigResponse.text()
+        throw new Error(`Failed to get upload signature: ${sigResponse.status}`)
+      }
+      
+      const responseText = await sigResponse.text()
+      
+      let sigData
+      try {
+        sigData = JSON.parse(responseText)
+      } catch (parseError) {
+        throw new Error('Invalid response from signature endpoint')
+      }
+      
+      const compressedFile = await compressImageToFile(file, 800, 0.8)
+      
+      const formData = new FormData()
+      formData.append('file', compressedFile)
+      formData.append('signature', sigData.signature)
+      formData.append('timestamp', sigData.timestamp.toString())
+      formData.append('api_key', sigData.apiKey)
+      formData.append('folder', sigData.folder)
+      
+      const uploadResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      )
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`)
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text()
+        throw new Error(`Upload failed: ${uploadResponse.status}`)
       }
 
-      const data = await response.json()
-      return data.url
+      const uploadData = await uploadResponse.json()
+      return uploadData.secure_url
     } catch (error) {
       uploadError.value = error instanceof Error ? error.message : 'Upload failed'
       return null

@@ -1,6 +1,9 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
 import { v2 as cloudinary } from 'cloudinary';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,8 +13,8 @@ cloudinary.config({
 
 const app = express();
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -66,26 +69,29 @@ app.post('/api/recipes', async (req, res) => {
   }
 });
 
-app.post('/api/uploads', async (req, res) => {
+app.get('/api/cloudinary-signature', async (req, res) => {
   try {
-    const { file } = req.body;
+    const timestamp = Math.round((new Date).getTime() / 1000);
+    const params_to_sign = {
+      timestamp,
+      folder: 'recipes'
+    };
     
-    if (!file) {
-      return res.status(400).json({ error: 'No file provided' });
-    }
-
-    const result = await cloudinary.uploader.upload(file, {
-      folder: 'recipes',
-      resource_type: 'auto',
-    });
-
-    res.json({ 
-      success: true,
-      url: result.secure_url 
+    const signature = cloudinary.utils.api_sign_request(
+      params_to_sign, 
+      process.env.CLOUDINARY_API_SECRET
+    );
+    
+    res.json({
+      signature,
+      timestamp,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      folder: 'recipes'
     });
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Upload failed' });
+    console.error('Error generating signature:', error);
+    res.status(500).json({ error: 'Failed to generate upload signature' });
   }
 });
 
@@ -229,6 +235,11 @@ app.delete('/api/recipes/:handle', async (req, res) => {
     console.error('Error deleting recipe:', error);
     res.status(500).json({ error: 'Failed to delete recipe' });
   }
+});
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}...`);
 });
 
 export default app;
