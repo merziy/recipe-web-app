@@ -1,7 +1,7 @@
 <template>
   <main>
     <h1>Add a New Recipe</h1>
-    <form @submit.prevent="submitRecipe">
+    <form @submit.prevent="submitRecipeForm">
       <label>
         Title:
         <input v-model="title" required />
@@ -39,21 +39,29 @@
         ></textarea>
       </label>
       <div class="button-group">
-        <button type="submit">Add Recipe</button>
-        <button type="button" @click="cancel">Cancel</button>
+        <button type="submit" :disabled="isSubmitting || isUploading">
+          {{ isSubmitting || isUploading ? 'Saving...' : 'Add Recipe' }}
+        </button>
+        <button type="button" @click="cancel" :disabled="isSubmitting || isUploading">
+          Cancel
+        </button>
       </div>
     </form>
 
-    <p v-if="status" :class="statusClass">{{ status }}</p>
+    <p v-if="submitError" class="error">{{ submitError }}</p>
   </main>
 </template>
 
 <script setup lang="ts">
 
 import IngredientSelector from '@/components/IngredientSelector.vue'
-import { useRecipesStore } from '@/stores/recipes'
+import { useRecipeForm } from '@/composables/useRecipeForm'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+const { submitRecipe, isSubmitting, isUploading, submitError } = useRecipeForm()
+
+const router = useRouter()
 
 const title = ref('')
 const description = ref('')
@@ -64,11 +72,6 @@ const instructionsText = ref('')
 const ingredients = ref<string[]>([])
 const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
-const status = ref('')
-const statusClass = ref('')
-
-const router = useRouter()
-const store = useRecipesStore()
 
 function cancel() {
   router.push('/')
@@ -86,7 +89,7 @@ function onImageChange(e: Event) {
   reader.readAsDataURL(file)
 }
 
-async function submitRecipe() {
+async function submitRecipeForm() {
   const handleBase = title.value
     .trim()
     .toLowerCase()
@@ -98,7 +101,7 @@ async function submitRecipe() {
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
 
-  const recipe = {
+  const recipeData = {
     title: title.value,
     description: description.value,
     servings: servings.value,
@@ -110,74 +113,18 @@ async function submitRecipe() {
     image: 'chicken-and-rice.jpg',
   }
 
-  try {
-    const API_BASE = import.meta.env.VITE_API_URL || ''
-    let saved: any = null
-    
-    if (imageFile.value) {
-      const reader = new FileReader()
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result as string
-          const upl = await fetch(`${API_BASE}/api/uploads`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file: base64 })
-          })
-          if (upl.ok) {
-            const d = await upl.json()
-            recipe.image = d.url
-          }
-          
-          saved = await store.add(recipe)
-          status.value = 'Recipe saved!'
-          statusClass.value = 'success'
-          
-          title.value = ''
-          description.value = ''
-          servings.value = 1
-          prepTime.value = ''
-          cookTime.value = ''
-          instructionsText.value = ''
-          ingredients.value = []
-          imageFile.value = null
-          imagePreview.value = null
-          
-          if (saved && saved.handle) {
-            router.push(`/article/${saved.handle}`)
-          } else {
-            router.push('/')
-          }
-        } catch (error) {
-          status.value = 'Upload failed!'
-          statusClass.value = 'error'
-        }
-      }
-      reader.readAsDataURL(imageFile.value)
-    } else {
-      saved = await store.add(recipe)
-      status.value = 'Recipe saved!'
-      statusClass.value = 'success'
-      
-      title.value = ''
-      description.value = ''
-      servings.value = 1
-      prepTime.value = ''
-      cookTime.value = ''
-      instructionsText.value = ''
-      ingredients.value = []
-      imageFile.value = null
-      imagePreview.value = null
-      
-      if (saved && saved.handle) {
-        router.push(`/article/${saved.handle}`)
-      } else {
-        router.push('/')
-      }
-    }
-  } catch (err) {
-    status.value = 'Error saving recipe.'
-    statusClass.value = 'error'
+  const success = await submitRecipe(recipeData, imageFile.value)
+  
+  if (success) {
+    title.value = ''
+    description.value = ''
+    servings.value = 1
+    prepTime.value = ''
+    cookTime.value = ''
+    instructionsText.value = ''
+    ingredients.value = []
+    imageFile.value = null
+    imagePreview.value = null
   }
 }
 </script>
@@ -222,17 +169,21 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 button[type="button"] {
   background: #666;
 }
 
-button:hover {
-  opacity: 0.9;
+button[type="button"]:disabled {
+  background: #999;
 }
 
-p.success {
-  color: #4CAF50;
-  margin-top: 1em;
+button:hover:not(:disabled) {
+  opacity: 0.9;
 }
 
 p.error {
