@@ -32,9 +32,10 @@ async function connectToMongoDB() {
   if (!connectionPromise) {
     connectionPromise = MongoClient.connect(mongoUrl, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 5000,
+      connectTimeoutMS: 30000,
+      family: 4
     });
   }
   
@@ -62,13 +63,9 @@ const withTimeout = (promise, ms = 10000) => {
 
 app.get('/api/health', async (req, res) => {
   try {
-    await connectToMongoDB();
-    if (db) {
-      await db.admin().ping();
-      res.json({ status: 'healthy', db: 'connected' });
-    } else {
-      res.status(503).json({ status: 'unhealthy', db: 'disconnected' });
-    }
+    const db = await connectToMongoDB();
+    await db.admin().ping();
+    res.json({ status: 'healthy', db: 'connected' });
   } catch (error) {
     console.error('Health check failed:', error);
     res.status(503).json({ status: 'unhealthy', error: error.message });
@@ -77,10 +74,7 @@ app.get('/api/health', async (req, res) => {
 
 app.post('/api/recipes', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
-
+    const db = await connectToMongoDB();
     const recipe = req.body;
     const result = await withTimeout(
       db.collection('recipes').insertOne(recipe),
@@ -125,10 +119,7 @@ app.get('/api/cloudinary-signature', async (req, res) => {
 
 app.get('/api/recipes', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
-
+    const db = await connectToMongoDB();
     const recipes = await withTimeout(
       db.collection('recipes').find({}).toArray(),
       5000
@@ -189,10 +180,7 @@ app.post('/api/recipes/:handle/date', async (req, res) => {
 
 app.get('/api/recipes/date/:date', async (req, res) => {
   try {
-    await connectToMongoDB();
-    const dbError = checkDatabase(res);
-    if (dbError) return dbError;
-
+    const db = await connectToMongoDB();
     const { date } = req.params;
     
     const scheduledRecipes = await withTimeout(
