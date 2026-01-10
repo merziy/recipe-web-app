@@ -8,16 +8,30 @@
                 <li>
                     <RouterLink to="/settings" @click="close">Settings</RouterLink>
                 </li>
+                <li v-if="isSignedIn">
+                    <span>Signed in</span>
+                    <button @click="signOut">Sign out</button>
+                </li>
+                <li v-else>
+                    <RouterLink to="/auth" @click="close">Sign In / Account</RouterLink>
+                </li>
             </ul>
         </aside>
     </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 const emit = defineEmits(['close'])
 function close() {
-    emit('close')
+        emit('close')
+}
+
+const isSignedIn = computed(() => !!localStorage.getItem('token'))
+function signOut() {
+    localStorage.removeItem('token')
+    window.location.reload()
 }
 </script>
 

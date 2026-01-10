@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { MongoClient } from 'mongodb';
 
+import { loginUser, signupUser } from './auth.js';
+
+import { setupGoogleAuth } from './googleAuth.js';
+
 dotenv.config();
 
 cloudinary.config({
@@ -38,6 +42,33 @@ const dbName = process.env.MONGO_DB || 'recipeApp';
 let db;
 let mongoClient;
 
+app.post('/api/signup', async (req, res) => {
+  try {
+    await connectToMongoDB();
+    const dbError = checkDatabase(res);
+    if (dbError) return dbError;
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const userId = await signupUser(db, email, password);
+    res.json({ success: true, userId });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    await connectToMongoDB();
+    const dbError = checkDatabase(res);
+    if (dbError) return dbError;
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const token = await loginUser(db, email, password);
+    res.json({ success: true, token });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+});
 async function connectToMongoDB() {
   try {
     if (!mongoClient) {
@@ -50,6 +81,7 @@ async function connectToMongoDB() {
       });
       db = mongoClient.db(dbName);
       console.log('Connected to MongoDB');
+      setupGoogleAuth(app, db);
     }
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);

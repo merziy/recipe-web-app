@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { RouterView } from 'vue-router';
+
+import { onMounted, ref } from 'vue';
 import Header from './components/Header.vue';
 import Sidebar from './components/Sidebar.vue';
 
@@ -9,6 +9,16 @@ import Sidebar from './components/Sidebar.vue';
   function toggleSidebar() {
     sidebarOpen.value = !sidebarOpen.value;
   }
+
+onMounted(() => {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('token');
+  if (token) {
+    localStorage.setItem('token', token);
+    url.searchParams.delete('token');
+    window.location.replace(url.pathname + url.search);
+  }
+});
 </script>
 
 <template>

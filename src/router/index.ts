@@ -10,6 +10,11 @@ const router = createRouter({
       component: CalendarView,
     },
     {
+      path: '/auth',
+      name: 'auth',
+      component: () => import('../views/AuthView.vue'),
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),

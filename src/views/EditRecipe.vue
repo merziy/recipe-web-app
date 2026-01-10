@@ -12,7 +12,7 @@
         <span class="file-label">Image:</span>
         <span class="file-button">Choose file</span>
         <input type="file" accept="image/*" @change="onImageChange" />
-        <span class="file-name">{{ imageFile ? imageFile.name : (currentImageName || 'No file chosen') }}</span>
+        <span class="file-name">{{ imageFile ? imageFile.name : (currentImageName() || 'No file chosen') }}</span>
       </label>
       <label>
         Description:
@@ -56,7 +56,7 @@
 import IngredientSelector from '@/components/IngredientSelector.vue';
 import { useImageUpload } from '@/composables/useImageUpload';
 import { useRecipesStore } from '@/stores/recipes';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -74,7 +74,7 @@ const loading = ref(true);
 const error = ref('');
 const recipe = ref<any>(null);
 
-const currentImageName = computed(() => {
+function currentImageName() {
   if (imageFile.value) return imageFile.value.name;
   const img = recipe.value && recipe.value.image;
   if (!img) return '';
@@ -85,7 +85,7 @@ const currentImageName = computed(() => {
   } catch (e) {
     return typeof img === 'string' ? img : '';
   }
-});
+}
 
 const statusClass = ref('');
 
