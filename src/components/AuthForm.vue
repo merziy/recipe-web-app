@@ -86,7 +86,9 @@ async function login() {
 }
 
 function googleSignIn() {
-  window.location.href = '/auth/google'
+  const base = import.meta.env.VITE_API_URL || ''
+  const url = base ? `${base}/auth/google` : '/auth/google'
+  window.location.href = url
 }
 </script>
 

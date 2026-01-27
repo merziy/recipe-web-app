@@ -5,13 +5,19 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { getUserCollection } from './user.js';
 dotenv.config();
 
-export function setupGoogleAuth(app, db) {
+export function setupGoogleAuth(app, getDb, connectDb) {
   passport.serializeUser((user, done) => {
     done(null, user._id.toString());
   });
   passport.deserializeUser(async (id, done) => {
     try {
       if (!id) return done(null, null);
+      let db = getDb && getDb();
+      if (!db && connectDb) {
+        try { await connectDb(); } catch {}
+        db = getDb && getDb();
+      }
+      if (!db) return done(null, null);
       const users = getUserCollection(db);
       if (!ObjectId.isValid(id)) return done(null, null);
       const user = await users.findOne({ _id: new ObjectId(id) });
@@ -21,12 +27,19 @@ export function setupGoogleAuth(app, db) {
       return done(null, null);
     }
   });
+
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_CALLBACK_URL,
   }, async (_accessToken, _refreshToken, profile, done) => {
     try {
+      let db = getDb && getDb();
+      if (!db && connectDb) {
+        try { await connectDb(); } catch {}
+        db = getDb && getDb();
+      }
+      if (!db) return done(new Error('DB not available'), null);
       const users = getUserCollection(db);
       let user = await users.findOne({ googleId: profile.id });
       if (!user) {

@@ -60,6 +60,7 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+setupGoogleAuth(app, () => db, connectToMongoDB);
 
 app.post('/api/signup', async (req, res) => {
   try {
@@ -113,7 +114,6 @@ async function connectToMongoDB() {
       });
       db = mongoClient.db(dbName);
       console.log('Connected to MongoDB');
-      setupGoogleAuth(app, db);
     }
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
