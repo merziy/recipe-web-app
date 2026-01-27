@@ -1,11 +1,26 @@
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+import { ObjectId } from 'mongodb';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { getUserCollection } from './user.js';
 dotenv.config();
 
 export function setupGoogleAuth(app, db) {
+  passport.serializeUser((user, done) => {
+    done(null, user._id.toString());
+  });
+  passport.deserializeUser(async (id, done) => {
+    try {
+      if (!id) return done(null, null);
+      const users = getUserCollection(db);
+      if (!ObjectId.isValid(id)) return done(null, null);
+      const user = await users.findOne({ _id: new ObjectId(id) });
+      if (!user) return done(null, null);
+      return done(null, user);
+    } catch (err) {
+      return done(null, null);
+    }
+  });
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -28,18 +43,11 @@ export function setupGoogleAuth(app, db) {
     }
   }));
 
-  app.use(passport.initialize());
-
   app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-  app.get('/auth/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/' }), async (req, res) => {
+  app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), async (req, res) => {
     try {
-      let user = req.user;
-      if (user && user.insertedId) {
-        user = await db.collection('users').findOne({ _id: user.insertedId });
-      }
-      const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173/';
-      res.redirect(`${frontendUrl}?token=${token}`);
+      const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+      res.redirect(`${frontendBase}/auth`);
     } catch (err) {
       res.redirect('/?error=oauth');
     }

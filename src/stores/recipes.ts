@@ -134,7 +134,6 @@ export const useRecipesStore = defineStore('recipes', () => {
   return {
     recipes,
     load,
-    getAll,
     getByHandle,
     add,
     update,

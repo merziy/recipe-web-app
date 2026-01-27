@@ -17,6 +17,18 @@ onMounted(() => {
     localStorage.setItem('token', token);
     url.searchParams.delete('token');
     window.location.replace(url.pathname + url.search);
+    return;
+  }
+  if (!localStorage.getItem('token')) {
+    const match = document.cookie.match(/(?:^|; )token=([^;]+)/);
+    if (match) {
+      try {
+        const cookieToken = decodeURIComponent(match[1]);
+        if (cookieToken) {
+          localStorage.setItem('token', cookieToken);
+        }
+      } catch {}
+    }
   }
 });
 </script>

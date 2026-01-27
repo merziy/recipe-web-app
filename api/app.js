@@ -1,7 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
+import MongoStore from 'connect-mongo';
 import dotenv from 'dotenv';
 import express from 'express';
+import session from 'express-session';
 import { MongoClient } from 'mongodb';
+import passport from 'passport';
 
 import { loginUser, signupUser } from './auth.js';
 
@@ -23,7 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -41,6 +44,22 @@ const mongoUrl = process.env.MONGODB_URI || process.env.MONGO_URL || 'mongodb://
 const dbName = process.env.MONGO_DB || 'recipeApp';
 let db;
 let mongoClient;
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
+  store: MongoStore.create({ mongoUrl, dbName })
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.post('/api/signup', async (req, res) => {
   try {
@@ -63,11 +82,24 @@ app.post('/api/login', async (req, res) => {
     if (dbError) return dbError;
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    const token = await loginUser(db, email, password);
-    res.json({ success: true, token });
+    const user = await loginUser(db, email, password);
+    req.login(user, (err) => {
+      if (err) return res.status(500).json({ error: 'Failed to create session' });
+      res.json({ success: true });
+    });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
+});
+app.post('/api/logout', (req, res) => {
+  req.logout(() => {
+    res.json({ success: true });
+  });
+});
+
+app.get('/api/me', (req, res) => {
+  if (!req.user) return res.json({ signedIn: false });
+  res.json({ signedIn: true, email: req.user.email });
 });
 async function connectToMongoDB() {
   try {
@@ -90,18 +122,23 @@ async function connectToMongoDB() {
   }
 }
 
-app.post('/api/recipes', async (req, res) => {
+function ensureAuth(req, res, next) {
+  if (req.user) return next();
+  return res.status(401).json({ error: 'Unauthorized' });
+}
+
+app.post('/api/recipes', ensureAuth, async (req, res) => {
   try {
     await connectToMongoDB();
     const dbError = checkDatabase(res);
     if (dbError) return dbError;
 
-    const recipe = req.body;
+    const recipe = { ...req.body, userId: req.user._id, userEmail: req.user.email };
     const result = await db.collection('recipes').insertOne(recipe);
     res.json({ 
       success: true, 
       id: result.insertedId,
-      message: 'Recipe added successfully!' 
+      message: 'Recipe added successfully!'
     });
   } catch (error) {
     console.error('Error adding recipe:', error);
@@ -135,13 +172,13 @@ app.get('/api/cloudinary-signature', async (req, res) => {
   }
 });
 
-app.get('/api/recipes', async (req, res) => {
+app.get('/api/recipes', ensureAuth, async (req, res) => {
   try {
     await connectToMongoDB();
     const dbError = checkDatabase(res);
     if (dbError) return dbError;
 
-    const recipes = await db.collection('recipes').find({}).toArray();
+    const recipes = await db.collection('recipes').find({ userId: req.user._id }).toArray();
     res.json(recipes);
   } catch (error) {
     console.error('Error fetching recipes:', error);
@@ -278,8 +315,11 @@ app.delete('/api/recipes/:handle', async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}...`);
-});
+(async () => {
+  await connectToMongoDB();
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}...`);
+  });
+})();
 
 export default app;

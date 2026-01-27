@@ -1,7 +1,7 @@
 <template>
   <div class="auth-form">
     <template v-if="isSignedIn">
-      <div class="signed-in-msg">Signed in</div>
+      <div class="signed-in-msg">Signed in as <b>{{ user?.email || 'user' }}</b></div>
       <button @click="signOut">Sign out</button>
     </template>
     <template v-else>
@@ -24,19 +24,31 @@
 
 <script setup>
 
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 const mode = ref('login')
 const email = ref('')
 const password = ref('')
 const error = ref('')
 
-const isSignedIn = computed(() => !!localStorage.getItem('token'))
+const user = ref(null)
+const isSignedIn = computed(() => !!user.value)
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/me')
+    const data = await res.json()
+    if (data.signedIn) user.value = { email: data.email }
+    else user.value = null
+  } catch {
+    user.value = null
+  }
+})
+
+async function signOut() {
+  await fetch('/api/logout', { method: 'POST' })
+  window.location.reload()
+}
 
 function toggleMode() {
-  function signOut() {
-    localStorage.removeItem('token')
-    window.location.reload()
-  }
   mode.value = mode.value === 'signup' ? 'login' : 'signup'
   error.value = ''
 }
@@ -67,7 +79,6 @@ async function login() {
     })
     const data = await res.json()
     if (!data.success) throw new Error(data.error)
-    localStorage.setItem('token', data.token)
     window.location.reload()
   } catch (e) {
     error.value = e.message

@@ -9,7 +9,7 @@
                     <RouterLink to="/settings" @click="close">Settings</RouterLink>
                 </li>
                 <li v-if="isSignedIn">
-                    <span>Signed in</span>
+                    <span>Signed in as <b>{{ user?.email || 'user' }}</b></span>
                     <button @click="signOut">Sign out</button>
                 </li>
                 <li v-else>
@@ -21,16 +21,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 const emit = defineEmits(['close'])
 function close() {
         emit('close')
 }
 
-const isSignedIn = computed(() => !!localStorage.getItem('token'))
-function signOut() {
-    localStorage.removeItem('token')
+const user = ref<{ email?: string } | null>(null)
+const isSignedIn = computed(() => !!user.value)
+onMounted(async () => {
+    try {
+        const res = await fetch('/api/me')
+        const data = await res.json()
+        if (data.signedIn) user.value = { email: data.email }
+        else user.value = null
+    } catch {
+        user.value = null
+    }
+})
+async function signOut() {
+    await fetch('/api/logout', { method: 'POST' })
     window.location.reload()
 }
 </script>

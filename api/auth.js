@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
 import { comparePassword, getUserCollection, hashPassword } from './user.js';
 dotenv.config();
 
@@ -18,6 +17,5 @@ export async function loginUser(db, email, password) {
   if (!user) throw new Error('Invalid credentials');
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) throw new Error('Invalid credentials');
-  const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  return token;
+  return { _id: user._id, email: user.email };
 }

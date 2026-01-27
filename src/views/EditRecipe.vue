@@ -151,7 +151,6 @@ async function submitRecipe() {
         updatedRecipe.image = imageUrl;
       } catch (error) {
         console.error('Error uploading image:', error);
-        // Still update recipe without new image if upload fails
       }
     }
     

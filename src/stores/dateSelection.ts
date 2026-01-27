@@ -1,5 +1,5 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
 export const useDateSelectionStore = defineStore('dateSelection', () => {
   const selectedDate = ref<Date | null>(null)
@@ -10,7 +10,7 @@ export const useDateSelectionStore = defineStore('dateSelection', () => {
 
   function getSelectedDateISO(): string | null {
     if (!selectedDate.value) return null
-    return selectedDate.value.toISOString().split('T')[0] // Returns YYYY-MM-DD format
+    return selectedDate.value.toISOString().split('T')[0]
   }
 
   function clearSelectedDate() {
