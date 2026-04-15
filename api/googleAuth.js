@@ -39,7 +39,7 @@ export function setupGoogleAuth(app, getDb, connectDb) {
         try { await connectDb(); } catch {}
         db = getDb && getDb();
       }
-      if (!db) return done(new Error('DB not available'), null);
+      if (!db) return done(null, false, { message: 'DB not available' });
       const users = getUserCollection(db);
       let user = await users.findOne({ googleId: profile.id });
       if (!user) {

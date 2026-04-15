@@ -24,7 +24,7 @@ export function useImageUpload() {
     try {
       const API_BASE = import.meta.env.VITE_API_URL || ''
       
-      const sigResponse = await fetch(`${API_BASE}/api/cloudinary-signature`)
+      const sigResponse = await fetch(`${API_BASE}/api/cloudinary-signature`, { credentials: 'include' })
       
       if (!sigResponse.ok) {
         throw new Error(`Failed to get upload signature: ${sigResponse.status}`)

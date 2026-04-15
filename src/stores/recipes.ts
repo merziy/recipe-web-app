@@ -21,7 +21,7 @@ export const useRecipesStore = defineStore('recipes', () => {
 
   async function load() {
     try {
-      const res = await fetch(`${API_BASE}/api/recipes`)
+      const res = await fetch(`${API_BASE}/api/recipes`, { credentials: 'include' })
       if (res.ok) {
         recipes.value = await res.json()
       } else {
@@ -44,6 +44,7 @@ export const useRecipesStore = defineStore('recipes', () => {
     try {
       const res = await fetch(`${API_BASE}/api/recipes`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(recipe),
       })
@@ -61,6 +62,7 @@ export const useRecipesStore = defineStore('recipes', () => {
     try {
       const res = await fetch(`${API_BASE}/api/recipes/${handle}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
       })
@@ -76,7 +78,7 @@ export const useRecipesStore = defineStore('recipes', () => {
 
   async function remove(handle: string) {
     try {
-      const res = await fetch(`${API_BASE}/api/recipes/${handle}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/api/recipes/${handle}`, { method: 'DELETE', credentials: 'include' })
       if (res && res.ok) {
         await load()
         return true
@@ -91,6 +93,7 @@ export const useRecipesStore = defineStore('recipes', () => {
     try {
       const res = await fetch(`${API_BASE}/api/recipes/${handle}/date`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: dateIso }),
       })
@@ -104,7 +107,7 @@ export const useRecipesStore = defineStore('recipes', () => {
 
   async function removeFromDate(handle: string, dateIso: string) {
     try {
-      const res = await fetch(`${API_BASE}/api/recipes/${handle}/date/${dateIso}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/api/recipes/${handle}/date/${dateIso}`, { method: 'DELETE', credentials: 'include' })
       if (res.ok) return true
       return false
     } catch (err) {
@@ -114,7 +117,7 @@ export const useRecipesStore = defineStore('recipes', () => {
 
   async function getRecipesForDate(dateIso: string) {
     try {
-      const res = await fetch(`${API_BASE}/api/recipes/date/${dateIso}`)
+      const res = await fetch(`${API_BASE}/api/recipes/date/${dateIso}`, { credentials: 'include' })
       if (res.ok) return await res.json()
       return []
     } catch (err) {

@@ -34,7 +34,7 @@ const user = ref(null)
 const isSignedIn = computed(() => !!user.value)
 onMounted(async () => {
   try {
-    const res = await fetch('/api/me')
+    const res = await fetch('/api/me', { credentials: 'include' })
     const data = await res.json()
     if (data.signedIn) user.value = { email: data.email }
     else user.value = null
@@ -44,7 +44,7 @@ onMounted(async () => {
 })
 
 async function signOut() {
-  await fetch('/api/logout', { method: 'POST' })
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' })
   window.location.reload()
 }
 
@@ -58,6 +58,7 @@ async function signup() {
   try {
     const res = await fetch('/api/signup', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.value, password: password.value })
     })
@@ -74,6 +75,7 @@ async function login() {
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.value, password: password.value })
     })
