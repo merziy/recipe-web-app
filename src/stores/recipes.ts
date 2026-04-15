@@ -52,6 +52,7 @@ export const useRecipesStore = defineStore('recipes', () => {
         await load()
         return getByHandle(recipe.handle)
       }
+      if (res.status === 401) throw new Error('Please sign in to add recipes')
       throw new Error('Failed to add')
     } catch (err) {
       throw err
