@@ -60,7 +60,7 @@ export function setupGoogleAuth(app, getDb, connectDb) {
   app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), async (req, res) => {
     try {
       const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
-      res.redirect(`${frontendBase}/auth`);
+      res.redirect(`${frontendBase}/`);
     } catch (err) {
       res.redirect('/?error=oauth');
     }
