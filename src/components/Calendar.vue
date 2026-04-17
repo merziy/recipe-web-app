@@ -38,7 +38,6 @@
 
 <script lang="ts" setup>
   import { useDateSelectionStore } from '@/stores/dateSelection';
-import { useRecipesStore } from '@/stores/recipes';
 import { computed, onMounted, ref, watch } from 'vue';
 import DateRecipesModal from './DateRecipesModal.vue';
 
@@ -132,25 +131,13 @@ import DateRecipesModal from './DateRecipesModal.vue';
 
   async function fetchDatesWithRecipes() {
     try {
-      const year = new Date().getFullYear();
-      const month = new Date().getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const store = useRecipesStore();
-      const dates = new Set<string>();
-
-      const dateKeys: string[] = [];
-      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-        dateKeys.push(d.toISOString().split('T')[0]);
-      }
-
-      const promises = dateKeys.map((k) => store.getRecipesForDate(k));
-      const results = await Promise.all(promises);
-      results.forEach((list, idx) => {
-        if (Array.isArray(list) && list.length > 0) dates.add(dateKeys[idx]);
-      });
-
-      datesWithRecipes.value = dates;
+      const allDays = weeks.value.flat() as Date[];
+      if (!allDays.length) return;
+      const from = getDateKey(allDays[0]);
+      const to = getDateKey(allDays[allDays.length - 1]);
+      const res = await fetch(`/api/scheduled-dates?from=${from}&to=${to}`, { credentials: 'include' });
+      const dates: string[] = res.ok ? await res.json() : [];
+      datesWithRecipes.value = new Set(dates);
     } catch (err) {
       console.error('Error fetching dates with recipes:', err);
     }

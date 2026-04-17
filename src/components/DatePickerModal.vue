@@ -47,7 +47,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRecipesStore } from '@/stores/recipes';
 import { computed, ref, watch } from 'vue';
 
 interface Props {
@@ -150,27 +149,13 @@ function nextMonth() {
 
 async function fetchDatesWithRecipes() {
   try {
-    const year = currentDate.value.getFullYear()
-    const month = currentDate.value.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    
-    const dates = new Set<string>()
-    const store = useRecipesStore();
-
-    const checks: Promise<void>[] = []
-    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-      const dateStr = getDateKey(new Date(d))
-      checks.push(
-        (async () => {
-          const has = await store.hasRecipesOnDate(dateStr)
-          if (has) dates.add(dateStr)
-        })()
-      )
-    }
-
-    await Promise.all(checks)
-    datesWithRecipes.value = dates
+    const allDays = weeks.value.flat() as Date[]
+    if (!allDays.length) return
+    const from = getDateKey(allDays[0])
+    const to = getDateKey(allDays[allDays.length - 1])
+    const res = await fetch(`/api/scheduled-dates?from=${from}&to=${to}`, { credentials: 'include' })
+    const dates: string[] = res.ok ? await res.json() : []
+    datesWithRecipes.value = new Set(dates)
   } catch (err) {
     console.error('Error fetching dates with recipes:', err)
   }

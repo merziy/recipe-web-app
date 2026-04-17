@@ -9,7 +9,7 @@
 
       <div class="actions" ref="actionsRef">
         <button class="action" @click="navigateToEdit">✏️<span>Edit</span></button>
-        <button class="action" @click="openDatePicker">➕<span>Save to list</span></button>
+        <button class="action" @click="openDatePicker">➕<span>Schedule</span></button>
         <button class="action" @click="openMore" ref="moreBtn">⋯<span>More</span></button>
       </div>
 

@@ -193,8 +193,8 @@ app.put('/api/recipes/:handle', async (req, res) => {
     if (dbError) return dbError;
 
     const { handle } = req.params;
-    const updatedRecipe = req.body;
-    
+    const { _id, ...updatedRecipe } = req.body;
+
     const result = await db.collection('recipes').updateOne(
       { handle },
       { $set: updatedRecipe }
@@ -236,6 +236,27 @@ app.post('/api/recipes/:handle/date', async (req, res) => {
   } catch (error) {
     console.error('Error scheduling recipe:', error);
     res.status(500).json({ error: 'Failed to schedule recipe' });
+  }
+});
+
+app.get('/api/scheduled-dates', async (req, res) => {
+  try {
+    await connectToMongoDB();
+    const dbError = checkDatabase(res);
+    if (dbError) return dbError;
+
+    const { from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ error: 'from and to query params required (e.g. 2026-03-29&to=2026-05-02)' });
+
+    const scheduled = await db.collection('scheduledRecipes')
+      .find({ date: { $gte: from, $lte: to } })
+      .toArray();
+
+    const dates = [...new Set(scheduled.map(s => s.date))];
+    res.json(dates);
+  } catch (error) {
+    console.error('Error fetching scheduled dates:', error);
+    res.status(500).json({ error: 'Failed to fetch scheduled dates' });
   }
 });
 
